@@ -12,4 +12,4 @@ typedef enum
 } bool;
 
 // not defined in SDK:
-#define M_PI	(3.14f)
+#define M_PI	(3.14159265358979323846f)
