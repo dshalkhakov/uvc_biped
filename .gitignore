@@ -6,6 +6,8 @@
 # cmake-specific directories
 out/
 
+# vcpkg-specific directories
+vcpkg_installed/
 # User-specific files
 *.rsuser
 *.suo
