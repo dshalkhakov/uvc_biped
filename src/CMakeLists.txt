@@ -9,7 +9,10 @@ include_directories("${CMAKE_SOURCE_DIR}/sys_null/include")
 # link_directories("${CMAKE_SOURCE_DIR}/../../ode-0.16.3/out/build/x64-debug")
 
 # Add source to this project's executable.
-add_executable (biped_controller ${BIPED_CONTROLLER_SRCS} "main.c" "sys_null/stubs.c")
+add_library(biped_lib "sys_null/stubs.c" "main.c")
+
+add_executable (biped_controller ${BIPED_CONTROLLER_SRCS} "program.c")
+target_link_libraries(biped_controller biped_lib)
 #target_link_libraries(biped_controller ode_doubled drawstuff)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
