@@ -1,4 +1,12 @@
-﻿typedef struct state_s {
+﻿// representation of angles used by servos
+#define HWANGLE_180	(2880)
+#define HWANGLE_MULTIPLIER	(16.0f)
+#define HWANGLE_RECIPROCAL	(1.0f/16.0f)
+#define TO_HWANGLE(x)		((x) * HWANGLE_MULTIPLIER)
+#define FROM_HWANGLE(x)		((x) * HWANGLE_RECIPROCAL)
+#define HWANGLE_TORAD(x)	((float)x*(M_PI/(180.0*16.0)))
+
+typedef struct state_s {
 	int16_t K0W[2];			// 股関節前後方向書込用 For writing in the anteroposterior direction of the hip joint
 	int16_t K1W[2];			// 股関節横方向書込用 For hip joint lateral writing
 	int16_t K2W[2];			// 股関節横方向書込用 For hip joint lateral writing
@@ -26,7 +34,9 @@ typedef struct core_s {
 	int16_t	p_ofs, r_ofs;
 	int16_t ir, ip, ira, ipa;
 	int16_t irb, ipb, ct;
+	// these angles are encoded as degree*16, eg. 180deg = 2880
 	int16_t	pitchs, rolls, pitch_ofs, roll_ofs, yaw, yaw_ofs;
+	// landB is always 0
 	int16_t	landF, landB;
 
 	int32_t	tBak, pitchi;
@@ -42,10 +52,13 @@ typedef struct core_s {
 	float fwctEnd;					// DS: 一周期最大カウント数 Maximum count in one cycle
 	float fwct;						// DS: 一周期カウンタ One cycle counter
 	float fwctUp;
+	// these angles are in radians
 	float pitch, roll, pitcht, rollt;
 	float pitch_gyrg, roll_gyrg;
 	float wk, wt;
+	// dyi is equivalent to I in PID control, and is for converting the tilt angle in the roll direction into the distance in the left-right direction and integrating it
 	float dyi, dyib, dyis;
+	// dxi is equivalent to I in PID control, and is for converting the tilt angle in the pitch direction into the distance in the front - back direction and integrating it
 	float dxi, dxib, dxis;
 	float rollg, fw, fwi, fws, sw, freeBak, tt0;
 	float supportingLeg, swingLeg;	// 支持脚、遊脚股関節振出角度 Support leg, swing leg hip joint swing angle
