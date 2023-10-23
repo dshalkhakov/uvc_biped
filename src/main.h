@@ -25,6 +25,9 @@ typedef struct state_s {
 } state_t;
 
 typedef struct core_s {
+	// jikuasi is a Japanese translation of the pivot foot and represents the foot on the grounded side.
+	// When jikuasi is 0, the right foot is in contact with the ground, and when it is 1,
+	// the left foot is in contact with the ground.
 	int16_t jikuasi;
 	int16_t motCt, motCtBak, motCtBak2, motCtdat;
 	int16_t mode, modeNxt, subMode; // keyMode

@@ -52,7 +52,35 @@ static void angAdj_foo(void** state) {
     angAdj(&core);
 
     // assert
-    assert_true(1);
+    assert_int_equal(core.ip, 0);
+    assert_int_equal(core.ipa, 0);
+    assert_int_equal(core.ira, 0);
+    assert_int_equal(core.ipb, TO_HWANGLE(10));
+    assert_int_equal(core.irb, TO_HWANGLE(0));
+}
+
+static void angAdj_bar(void** state) {
+    // arrange
+    core_t core;
+    int16_t angle = TO_HWANGLE(1);
+
+    core.pitchs = angle;
+    core.rolls = angle;
+    core.ip = 10;
+    core.ipa = 10;
+    core.ira = 10;
+    core.ipb = angle + 1;
+    core.irb = angle - 1;
+
+    // act
+    angAdj(&core);
+
+    // assert
+    assert_int_equal(core.ip, 11);
+    assert_int_equal(core.ipa, 10 + angle);
+    assert_int_equal(core.ira, 10 + angle);
+    assert_int_equal(core.ipb, angle);
+    assert_int_equal(core.irb, angle);
 }
 
 static void detAng_pitchAndRollInThreshold_doesNothing(void** state) {
@@ -151,6 +179,7 @@ int main(void) {
         cmocka_unit_test(movSv_whenMotCtLessThan1_stopsMoving),
         cmocka_unit_test(movSv_whenMotCtMoreThan1_moves),
         cmocka_unit_test(angAdj_foo),
+        cmocka_unit_test(angAdj_bar),
         cmocka_unit_test(detAng_pitchAndRollInThreshold_doesNothing),
         cmocka_unit_test(uvcSub_whenFwctIs11_supportLegIsReturnedWithMaxValue_inLRdirection),
         cmocka_unit_test(uvcSub_legLiftHeightLessThanMaxLiftHeight_noRoll_legLengthRestored),
