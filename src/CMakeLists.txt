@@ -8,7 +8,7 @@ project ("biped_controller")
 include_directories("${CMAKE_SOURCE_DIR}/sys_null/include")
 
 # Add source to this project's executable.
-add_library(biped_lib "sys_win/stubs.c" "sys_win/timer.c" "main.c" "main.h")
+add_library(biped_lib "sys_win/stubs.c" "sys_win/timer.c" "sys_win/i2c.c" "main.c" "main.h" "sys_win/uart.c")
 
 add_executable (biped_controller ${BIPED_CONTROLLER_SRCS} "program.c" "main.h")
 target_link_libraries(biped_controller biped_lib)
