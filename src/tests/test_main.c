@@ -184,6 +184,36 @@ extern void keyCont_basicKeyMode_rPressed_coreModeIsReset(void** state);
 extern void keyCont_basicKeyMode_gPressed_started(void** state);
 extern void keyCont_basicKeyMode_tPressed_coreMode790Engaged(void** state);
 extern void keyCont_basicKeyMode_yPressed_coreMode791Engaged(void** state);
+extern void keyCont_basicKeyMode_pPressed_keyMode5Engaged(void** state);
+
+extern void keyCont_keyMode5_digit0Pressed_knSet(void** state);
+extern void keyCont_keyMode5_digit1Pressed_knSet(void** state);
+extern void keyCont_keyMode5_digit2Pressed_knSet(void** state);
+extern void keyCont_keyMode5_digit3Pressed_knSet(void** state);
+extern void keyCont_keyMode5_digit4Pressed_knSet(void** state);
+extern void keyCont_keyMode5_digit5Pressed_knSet(void** state);
+extern void keyCont_keyMode5_digit6Pressed_knSet(void** state);
+extern void keyCont_keyMode5_digit7Pressed_knSet(void** state);
+extern void keyCont_keyMode5_digit8Pressed_knSet(void** state);
+extern void keyCont_keyMode5_digit9Pressed_knSet(void** state);
+extern void keyCont_keyMode5_dxiIncremented(void** state);
+extern void keyCont_keyMode5_dxiDecremented(void** state);
+extern void keyCont_keyMode5_dyiIncremented(void** state);
+extern void keyCont_keyMode5_dyiDecremented(void** state);
+extern void keyCont_keyMode5_swMaxIncremented(void** state);// swMax
+extern void keyCont_keyMode5_swMaxDecremented(void** state);// swMax
+extern void keyCont_keyMode5_pitchGyrgIncremented(void** state);// pitch_gyrg
+extern void keyCont_keyMode5_pitchGyrgDecremented(void** state);// pitch_gyrg
+extern void keyCont_keyMode5_rollGyrgIncremented(void** state);// roll_gyrg
+extern void keyCont_keyMode5_rollGyrgDecremented(void** state);// roll_gyrg
+extern void keyCont_keyMode5_fhIncremented(void** state);// fh
+extern void keyCont_keyMode5_fhDecremented(void** state);// fh
+extern void keyCont_keyMode5_fhMaxIncremented(void** state);// fhMax
+extern void keyCont_keyMode5_fhMaxDecremented(void** state);// fhMax
+extern void keyCont_keyMode5_walkCtLimIncremented(void** state);// walkCtLim
+extern void keyCont_keyMode5_walkCtLimDecremented(void** state);// walkCtLim
+extern void keyCont_keyMode5_autoHIncremented(void** state);// autoH
+extern void keyCont_keyMode5_autoHDecremented(void** state);// autoH
 
 int main(void) {
     const struct CMUnitTest tests[] = {
@@ -201,6 +231,44 @@ int main(void) {
         cmocka_unit_test_setup_teardown(keyCont_basicKeyMode_gPressed_started, keyCont_testSetup, keyCont_testTeardown),
         cmocka_unit_test_setup_teardown(keyCont_basicKeyMode_tPressed_coreMode790Engaged, keyCont_testSetup, keyCont_testTeardown),
         cmocka_unit_test_setup_teardown(keyCont_basicKeyMode_yPressed_coreMode791Engaged, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_basicKeyMode_pPressed_keyMode5Engaged, keyCont_testSetup, keyCont_testTeardown),
+
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_digit0Pressed_knSet, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_digit1Pressed_knSet, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_digit2Pressed_knSet, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_digit3Pressed_knSet, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_digit4Pressed_knSet, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_digit5Pressed_knSet, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_digit6Pressed_knSet, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_digit7Pressed_knSet, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_digit8Pressed_knSet, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_digit9Pressed_knSet, keyCont_testSetup, keyCont_testTeardown),
+
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_dxiIncremented, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_dxiDecremented, keyCont_testSetup, keyCont_testTeardown),
+
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_dyiIncremented, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_dyiDecremented, keyCont_testSetup, keyCont_testTeardown),
+
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_swMaxIncremented, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_swMaxDecremented, keyCont_testSetup, keyCont_testTeardown),
+
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_pitchGyrgIncremented, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_pitchGyrgDecremented, keyCont_testSetup, keyCont_testTeardown),
+
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_rollGyrgIncremented, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_rollGyrgDecremented, keyCont_testSetup, keyCont_testTeardown),
+
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_fhIncremented, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_fhDecremented, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_fhMaxIncremented, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_fhMaxDecremented, keyCont_testSetup, keyCont_testTeardown),
+
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_walkCtLimIncremented, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_walkCtLimDecremented, keyCont_testSetup, keyCont_testTeardown),
+
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_autoHIncremented, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_keyMode5_autoHDecremented, keyCont_testSetup, keyCont_testTeardown),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
