@@ -8,10 +8,12 @@ project ("biped_controller")
 include_directories("${CMAKE_SOURCE_DIR}/sys_null/include")
 
 # Add source to this project's executable.
-add_library(biped_lib "sys_win/stubs.c" "sys_win/timer.c" "sys_win/i2c.c" "main.c" "main.h" "sys_win/uart.c")
+add_library(sys_win_lib "sys_win/stubs.c" "sys_win/timer.c" "sys_win/i2c.c" "sys_win/uart.c")
+
+add_library(biped_lib "main.c" "main.h")
 
 add_executable (biped_controller ${BIPED_CONTROLLER_SRCS} "program.c" "main.h")
-target_link_libraries(biped_controller biped_lib)
+target_link_libraries(biped_controller biped_lib sys_win_lib)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET biped_controller PROPERTY CXX_STANDARD 20)

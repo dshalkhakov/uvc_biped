@@ -1,9 +1,11 @@
+#include <string.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <setjmp.h>
 #include <cmocka.h>
 #include <kcb5.h>
+#include <uart.h>
 #include "../main.h"
 
 static void movSv_whenMotCtLessThan1_stopsMoving(void** state) {
@@ -174,6 +176,54 @@ static void uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWith
 
 // TODO same as uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWithlegLength, but not capped to 140
 
+static void keyCont_nullString_ignored(void** state) {
+    input_t input;
+    core_t  core;
+    state_t st;
+
+    // arrange
+    memset(&input, 0, sizeof(input_t));
+    memset(&core, 0, sizeof(core_t));
+    memset(&st, 0, sizeof(state_t));
+    input.keyMode = 5;
+
+    expect_value(__wrap_uart_rx, port, UART_COM);
+    will_return(__wrap_uart_rx, '\0');
+    expect_value(__wrap_uart_rx, length, 1);
+    expect_value(__wrap_uart_rx, timeout, 1);
+    will_return(__wrap_uart_rx, 1);
+
+    // act
+    keyCont(&input, &core, &st);
+
+    // assert
+    assert_int_equal(input.keyMode, 5);
+}
+
+static void keyCont_spacePressed_modeIsReset(void** state) {
+    input_t input;
+    core_t  core;
+    state_t st;
+
+    // arrange
+    memset(&input, 0, sizeof(input_t));
+    memset(&core, 0, sizeof(core_t));
+    memset(&st, 0, sizeof(state_t));
+    input.keyMode = 5;
+
+    expect_value(__wrap_uart_rx, port, UART_COM);
+    will_return(__wrap_uart_rx, ' ');
+    expect_value(__wrap_uart_rx, length, 1);
+    expect_value(__wrap_uart_rx, timeout, 1);
+    will_return(__wrap_uart_rx, 1);
+
+    // act
+    keyCont(&input, &core, &st);
+
+    // assert
+    assert_int_equal(input.keyMode, 0);
+}
+
 int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(movSv_whenMotCtLessThan1_stopsMoving),
@@ -184,6 +234,8 @@ int main(void) {
         cmocka_unit_test(uvcSub_whenFwctIs11_supportLegIsReturnedWithMaxValue_inLRdirection),
         cmocka_unit_test(uvcSub_legLiftHeightLessThanMaxLiftHeight_noRoll_legLengthRestored),
         cmocka_unit_test(uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWithlegLength),
+        cmocka_unit_test(keyCont_nullString_ignored),
+        cmocka_unit_test(keyCont_spacePressed_modeIsReset),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
