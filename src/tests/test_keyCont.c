@@ -370,8 +370,207 @@ void keyCont_keyMode5_autoHDecremented(void** state) {
 
 #pragma endregion // !keyMode5 +- variable tuning
 
-// TODO keyMode 2: '0', '1', '2'
-// TODO keyMode 3: '0', '1', '2'
-// TODO keyMode 4: '0', '1'
-// TODO keyMode between 20..60: 'r', 'l', 'b'
-// TODO keyMode between 200..800: '+', '-'
+static void keyCont_keyModeN_charPressed_nextKeyModeEngaged(void** state, int keyMode, char charPressed, int nextKeyMode) {
+    teststate_t* data = *state;
+
+    // arrange
+    data->input.keyMode = keyMode;
+
+    expect_value(__wrap_uart_rx, port, UART_COM);
+    will_return(__wrap_uart_rx, charPressed);
+    expect_value(__wrap_uart_rx, length, 1);
+    expect_value(__wrap_uart_rx, timeout, 1);
+    will_return(__wrap_uart_rx, 1);
+
+    // act
+    keyCont(&data->input, &data->core, &data->state);
+
+    // assert
+    assert_int_equal(data->input.keyMode, nextKeyMode);
+}
+
+#pragma region keyMode 2: '0', '1', '2' -> 20, 21, 22
+
+void keyCont_keyMode2_0Pressed_keyMode20Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 2, '0', 20);
+}
+
+void keyCont_keyMode2_1Pressed_keyMode21Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 2, '1', 21);
+}
+
+void keyCont_keyMode2_2Pressed_keyMode22Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 2, '2', 22);
+}
+
+#pragma endregion
+
+#pragma region keyMode 3: '0', '1', '2' -> 30, 31, 32
+
+void keyCont_keyMode3_0Pressed_keyMode30Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 3, '0', 30);
+}
+
+void keyCont_keyMode3_1Pressed_keyMode31Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 3, '1', 31);
+}
+
+void keyCont_keyMode3_2Pressed_keyMode32Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 3, '2', 32);
+}
+
+#pragma endregion
+
+#pragma region keyMode 4: '0', '1' -> 40, 41
+
+void keyCont_keyMode4_0Pressed_keyMode40Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 4, '0', 40);
+}
+
+void keyCont_keyMode4_1Pressed_keyMode41Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 4, '1', 41);
+}
+
+#pragma endregion // !keyMode 4: '0', '1'
+
+#pragma region keyMode between 20..60: 'r', 'l', 'b' -> *10
+
+void keyCont_keyMode20_rPressed_keyMode200Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 20, 'r', 200);
+}
+
+void keyCont_keyMode20_lPressed_keyMode201Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 20, 'l', 201);
+}
+
+void keyCont_keyMode20_bPressed_keyMode202Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 20, 'b', 202);
+}
+
+// 21 -> 210, 211, 212
+void keyCont_keyMode21_rPressed_keyMode210Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 21, 'r', 210);
+}
+
+void keyCont_keyMode21_lPressed_keyMode211Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 21, 'l', 211);
+}
+
+void keyCont_keyMode21_bPressed_keyMode212Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 21, 'b', 212);
+}
+
+// 22 -> 220, 221, 222
+void keyCont_keyMode22_rPressed_keyMode220Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 22, 'r', 220);
+}
+
+void keyCont_keyMode22_lPressed_keyMode221Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 22, 'l', 221);
+}
+
+void keyCont_keyMode22_bPressed_keyMode222Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 22, 'b', 222);
+}
+
+// 30 -> 300, 301, 302
+void keyCont_keyMode30_rPressed_keyMode300Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 30, 'r', 300);
+}
+
+void keyCont_keyMode30_lPressed_keyMode301Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 30, 'l', 301);
+}
+
+void keyCont_keyMode30_bPressed_keyMode302Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 30, 'b', 302);
+}
+
+// 31 -> 310, 311, 312
+void keyCont_keyMode31_rPressed_keyMode310Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 31, 'r', 310);
+}
+
+void keyCont_keyMode31_lPressed_keyMode311Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 31, 'l', 311);
+}
+
+void keyCont_keyMode31_bPressed_keyMode312Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 31, 'b', 312);
+}
+
+// 32 -> 320, 321, 322
+void keyCont_keyMode32_rPressed_keyMode320Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 32, 'r', 320);
+}
+
+void keyCont_keyMode32_lPressed_keyMode321Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 32, 'l', 321);
+}
+
+void keyCont_keyMode32_bPressed_keyMode322Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 32, 'b', 322);
+}
+
+// 40 -> 400, 401, 402
+void keyCont_keyMode40_rPressed_keyMode400Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 40, 'r', 400);
+}
+
+void keyCont_keyMode40_lPressed_keyMode401Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 40, 'l', 401);
+}
+
+void keyCont_keyMode40_bPressed_keyMode402Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 40, 'b', 402);
+}
+
+// 41 -> 410, 411, 412
+void keyCont_keyMode41_rPressed_keyMode410Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 41, 'r', 410);
+}
+
+void keyCont_keyMode41_lPressed_keyMode411Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 41, 'l', 411);
+}
+
+void keyCont_keyMode41_bPressed_keyMode412Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 41, 'b', 412);
+}
+
+// 50 -> 500, 501, 502
+void keyCont_keyMode50_rPressed_keyMode500Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 50, 'r', 500);
+}
+
+void keyCont_keyMode50_lPressed_keyMode501Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 50, 'l', 501);
+}
+
+void keyCont_keyMode50_bPressed_keyMode502Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 50, 'b', 502);
+}
+
+// 60 -> 600, 601, 602
+void keyCont_keyMode60_rPressed_keyMode600Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 60, 'r', 600);
+}
+
+void keyCont_keyMode60_lPressed_keyMode601Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 60, 'l', 601);
+}
+
+void keyCont_keyMode60_bPressed_keyMode602Engaged(void** state) {
+    keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 60, 'b', 602);
+}
+
+#pragma endregion
+
+#pragma region keyMode between 200..800: '+', '-'
+
+// 200, 201, 202
+// 210, 211, 212
+// 220, 221, 222
+
+#pragma endregion // !keyMode between 200..800: '+', '-'
+
