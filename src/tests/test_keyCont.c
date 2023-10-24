@@ -112,7 +112,7 @@ void keyCont_basicKeyMode_gPressed_started(void** state) {
     keyCont(&data->input, &data->core, &data->state);
 
     // assert
-    assert_true(1); // not should what should be tested here... so here goes
+    assert_true(1); // not sure should what should be tested here... so here goes
 }
 
 void keyCont_basicKeyMode_tPressed_coreMode790Engaged(void** state) {
@@ -240,30 +240,7 @@ void keyCont_keyMode5_digit9Pressed_knSet(void** state) {
 
 #pragma endregion // !keyMode 5 digit presses
 
-#pragma region keyMode5 +- variable tuning
-
-static void keyCont_keyMode5_charPressed_variableChanged(void** state, char plusMinus, int kn, float initial, float expected, void(*varSetter)(core_t*,float), float (*varGetter)(core_t*)) {
-    teststate_t* data = *state;
-    float result;
-
-    // arrange
-    data->input.keyMode = 5;
-    (*varSetter)(&data->core, initial);
-    data->input.kn = kn;
-
-    expect_value(__wrap_uart_rx, port, UART_COM);
-    will_return(__wrap_uart_rx, plusMinus);
-    expect_value(__wrap_uart_rx, length, 1);
-    expect_value(__wrap_uart_rx, timeout, 1);
-    will_return(__wrap_uart_rx, 1);
-
-    // act
-    keyCont(&data->input, &data->core, &data->state);
-
-    // assert
-    result = (*varGetter)(&data->core);
-    assert_float_equal(result, expected, 0.001f);
-}
+#pragma region core_t getters/setters
 
 void core_dxiSetter(core_t* core, float val) { core->dxi = val; }
 float core_dxiGetter(core_t* core) { return core->dxi; }
@@ -291,6 +268,33 @@ float core_walkCtLimGetter(core_t* core) { return (float)core->walkCtLim; }
 
 void core_autoHSetter(core_t* core, float val) { core->autoH = val; }
 float core_autoHGetter(core_t* core) { return core->autoH; }
+
+#pragma endregion // !core_t getters/setters
+
+#pragma region keyMode5 +- variable tuning
+
+static void keyCont_keyMode5_charPressed_variableChanged(void** state, char plusMinus, int kn, float initial, float expected, void(*varSetter)(core_t*,float), float (*varGetter)(core_t*)) {
+    teststate_t* data = *state;
+    float result;
+
+    // arrange
+    data->input.keyMode = 5;
+    (*varSetter)(&data->core, initial);
+    data->input.kn = kn;
+
+    expect_value(__wrap_uart_rx, port, UART_COM);
+    will_return(__wrap_uart_rx, plusMinus);
+    expect_value(__wrap_uart_rx, length, 1);
+    expect_value(__wrap_uart_rx, timeout, 1);
+    will_return(__wrap_uart_rx, 1);
+
+    // act
+    keyCont(&data->input, &data->core, &data->state);
+
+    // assert
+    result = (*varGetter)(&data->core);
+    assert_float_equal(result, expected, 0.001f);
+}
 
 void keyCont_keyMode5_dxiIncremented(void** state) {
     keyCont_keyMode5_charPressed_variableChanged(state, '+', 0, 100.0f, 101.0f, &core_dxiSetter, &core_dxiGetter);
