@@ -176,53 +176,14 @@ static void uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWith
 
 // TODO same as uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWithlegLength, but not capped to 140
 
-static void keyCont_nullString_ignored(void** state) {
-    input_t input;
-    core_t  core;
-    state_t st;
-
-    // arrange
-    memset(&input, 0, sizeof(input_t));
-    memset(&core, 0, sizeof(core_t));
-    memset(&st, 0, sizeof(state_t));
-    input.keyMode = 5;
-
-    expect_value(__wrap_uart_rx, port, UART_COM);
-    will_return(__wrap_uart_rx, '\0');
-    expect_value(__wrap_uart_rx, length, 1);
-    expect_value(__wrap_uart_rx, timeout, 1);
-    will_return(__wrap_uart_rx, 1);
-
-    // act
-    keyCont(&input, &core, &st);
-
-    // assert
-    assert_int_equal(input.keyMode, 5);
-}
-
-static void keyCont_spacePressed_modeIsReset(void** state) {
-    input_t input;
-    core_t  core;
-    state_t st;
-
-    // arrange
-    memset(&input, 0, sizeof(input_t));
-    memset(&core, 0, sizeof(core_t));
-    memset(&st, 0, sizeof(state_t));
-    input.keyMode = 5;
-
-    expect_value(__wrap_uart_rx, port, UART_COM);
-    will_return(__wrap_uart_rx, ' ');
-    expect_value(__wrap_uart_rx, length, 1);
-    expect_value(__wrap_uart_rx, timeout, 1);
-    will_return(__wrap_uart_rx, 1);
-
-    // act
-    keyCont(&input, &core, &st);
-
-    // assert
-    assert_int_equal(input.keyMode, 0);
-}
+extern int keyCont_testSetup(void** state);
+extern int keyCont_testTeardown(void** state);
+extern void keyCont_nullString_ignored(void** state);
+extern void keyCont_spacePressed_keyModeReset(void** state);
+extern void keyCont_basicKeyMode_rPressed_coreModeIsReset(void** state);
+extern void keyCont_basicKeyMode_gPressed_started(void** state);
+extern void keyCont_basicKeyMode_tPressed_coreMode790Engaged(void** state);
+extern void keyCont_basicKeyMode_yPressed_coreMode791Engaged(void** state);
 
 int main(void) {
     const struct CMUnitTest tests[] = {
@@ -234,8 +195,12 @@ int main(void) {
         cmocka_unit_test(uvcSub_whenFwctIs11_supportLegIsReturnedWithMaxValue_inLRdirection),
         cmocka_unit_test(uvcSub_legLiftHeightLessThanMaxLiftHeight_noRoll_legLengthRestored),
         cmocka_unit_test(uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWithlegLength),
-        cmocka_unit_test(keyCont_nullString_ignored),
-        cmocka_unit_test(keyCont_spacePressed_modeIsReset),
+        cmocka_unit_test_setup_teardown(keyCont_nullString_ignored, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_spacePressed_keyModeReset, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_basicKeyMode_rPressed_coreModeIsReset, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_basicKeyMode_gPressed_started, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_basicKeyMode_tPressed_coreMode790Engaged, keyCont_testSetup, keyCont_testTeardown),
+        cmocka_unit_test_setup_teardown(keyCont_basicKeyMode_yPressed_coreMode791Engaged, keyCont_testSetup, keyCont_testTeardown),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
