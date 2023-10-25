@@ -1,4 +1,4 @@
-// original code by Dr Guero
+﻿// original code by Dr Guero
 // translation and cleanup by Dmitry Shalkhakov
 // coordinate system conventions: Z is up/down, X is forward/backward, Y is left/right
 /*
