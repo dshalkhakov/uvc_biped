@@ -435,6 +435,7 @@ void keyCont_keyMode4_1Pressed_keyMode41Engaged(void** state) {
 
 #pragma region keyMode between 20..60: 'r', 'l', 'b' -> *10
 
+// 20 -> 200, 201, 202
 void keyCont_keyMode20_rPressed_keyMode200Engaged(void** state) {
     keyCont_keyModeN_charPressed_nextKeyModeEngaged(state, 20, 'r', 200);
 }
@@ -566,11 +567,320 @@ void keyCont_keyMode60_bPressed_keyMode602Engaged(void** state) {
 
 #pragma endregion
 
+#pragma region state_t getters
+
+int16_t state_getK0W(state_t* state, int leg) { return state->K0W[leg]; }
+int16_t state_getK1W(state_t* state, int leg) { return state->K1W[leg]; }
+int16_t state_getK2W(state_t* state, int leg) { return state->K2W[leg]; }
+int16_t state_getHW (state_t* state, int leg) { return state->HW [leg]; }
+int16_t state_getA0W(state_t* state, int leg) { return state->A0W[leg]; }
+int16_t state_getA1W(state_t* state, int leg) { return state->A1W[leg]; }
+int16_t state_getU0W(state_t* state, int leg) { return state->U0W[leg]; }
+int16_t state_getU1W(state_t* state, int leg) { return state->U1W[leg]; }
+int16_t state_getU2W(state_t* state, int leg) { return state->U2W[leg]; }
+int16_t state_getEW (state_t* state, int leg) { return state->EW [leg]; }
+int16_t state_getWESTW(state_t *state, int leg) { return state->WESTW; }
+int16_t state_getHEADW(state_t* state, int leg) { return state->HEADW; }
+//int16_t K0R, K0RB, U0R, U0L, U1R, U1L, EWS;
+//int16_t K0L, K0LB, U0WB;
+//int16_t state_getK0WB(state_t* state, int leg){ return state->
+
+#pragma endregion !state_t getters
+
+#define SERVO_INCREMENT (30)
+
+static void keyCont_keyModeN_charPressed_servoEngaged(void** state, int keyMode, char charPressed, int16_t (*getter)(state_t*,int), int16_t expectedServo0, int16_t expectedServo1) {
+    teststate_t* data = *state;
+
+    // arrange
+    data->input.keyMode = keyMode;
+
+    expect_value(__wrap_uart_rx, port, UART_COM);
+    will_return(__wrap_uart_rx, charPressed);
+    expect_value(__wrap_uart_rx, length, 1);
+    expect_value(__wrap_uart_rx, timeout, 1);
+    will_return(__wrap_uart_rx, 1);
+
+    // act
+    keyCont(&data->input, &data->core, &data->state);
+
+    // assert
+    int16_t servo0 = getter(&data->state, 0);
+    int16_t servo1 = getter(&data->state, 1);
+    assert_int_equal(servo0, expectedServo0);
+    assert_int_equal(servo1, expectedServo1);
+}
+
 #pragma region keyMode between 200..800: '+', '-'
 
 // 200, 201, 202
+void keyCont_keyMode200_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 200, '+', &state_getK0W, SERVO_INCREMENT, 0);
+}
+void keyCont_keyMode200_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 200, '-', &state_getK0W, -SERVO_INCREMENT, 0);
+}
+
+void keyCont_keyMode201_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 201, '+', &state_getK0W, 0, SERVO_INCREMENT);
+}
+void keyCont_keyMode201_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 201, '-', &state_getK0W, 0, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode202_plus_servosForward(void** state) {
+    // 202 moves both legs
+    keyCont_keyModeN_charPressed_servoEngaged(state, 202, '+', &state_getK0W, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode202_minus_servosBackward(void** state) {
+    // 202 moves both legs
+    keyCont_keyModeN_charPressed_servoEngaged(state, 202, '-', &state_getK0W, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
 // 210, 211, 212
+void keyCont_keyMode210_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 210, '+', &state_getK1W, SERVO_INCREMENT, 0);
+}
+void keyCont_keyMode210_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 210, '-', &state_getK1W, -SERVO_INCREMENT, 0);
+}
+
+void keyCont_keyMode211_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 211, '+', &state_getK1W, 0, SERVO_INCREMENT);
+}
+void keyCont_keyMode211_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 211, '-', &state_getK1W, 0, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode212_plus_servosForward(void** state) {
+    // 212 moves both legs
+    keyCont_keyModeN_charPressed_servoEngaged(state, 212, '+', &state_getK1W, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode212_minus_servosBackward(void** state) {
+    // 212 moves both legs
+    keyCont_keyModeN_charPressed_servoEngaged(state, 212, '-', &state_getK1W, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
 // 220, 221, 222
+void keyCont_keyMode220_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 220, '+', &state_getK2W, SERVO_INCREMENT, 0);
+}
+void keyCont_keyMode220_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 220, '-', &state_getK2W, -SERVO_INCREMENT, 0);
+}
+
+void keyCont_keyMode221_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 221, '+', &state_getK2W, 0, SERVO_INCREMENT);
+}
+void keyCont_keyMode221_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 221, '-', &state_getK2W, 0, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode222_plus_servosForward(void** state) {
+    // 222 moves both legs
+    keyCont_keyModeN_charPressed_servoEngaged(state, 222, '+', &state_getK2W, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode222_minus_servosBackward(void** state) {
+    // 222 moves both legs
+    keyCont_keyModeN_charPressed_servoEngaged(state, 222, '-', &state_getK2W, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
+// 300, 301, 302
+void keyCont_keyMode300_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 300, '+', &state_getU0W, SERVO_INCREMENT, 0);
+}
+void keyCont_keyMode300_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 300, '-', &state_getU0W, -SERVO_INCREMENT, 0);
+}
+
+void keyCont_keyMode301_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 301, '+', &state_getU0W, 0, SERVO_INCREMENT);
+}
+void keyCont_keyMode301_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 301, '-', &state_getU0W, 0, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode302_plus_servosForward(void** state) {
+    // 302 moves both arms
+    keyCont_keyModeN_charPressed_servoEngaged(state, 302, '+', &state_getU0W, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode302_minus_servosBackward(void** state) {
+    // 302 moves both arms
+    keyCont_keyModeN_charPressed_servoEngaged(state, 302, '-', &state_getU0W, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
+// 310, 311, 312
+void keyCont_keyMode310_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 310, '+', &state_getU1W, SERVO_INCREMENT, 0);
+}
+void keyCont_keyMode310_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 310, '-', &state_getU1W, -SERVO_INCREMENT, 0);
+}
+
+void keyCont_keyMode311_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 311, '+', &state_getU1W, 0, SERVO_INCREMENT);
+}
+void keyCont_keyMode311_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 311, '-', &state_getU1W, 0, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode312_plus_servosForward(void** state) {
+    // 312 moves both arms
+    keyCont_keyModeN_charPressed_servoEngaged(state, 312, '+', &state_getU1W, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode312_minus_servosBackward(void** state) {
+    // 312 moves both arms
+    keyCont_keyModeN_charPressed_servoEngaged(state, 312, '-', &state_getU1W, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
+// 320, 321, 322 arms
+void keyCont_keyMode320_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 320, '+', &state_getU2W, SERVO_INCREMENT, 0);
+}
+void keyCont_keyMode320_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 320, '-', &state_getU2W, -SERVO_INCREMENT, 0);
+}
+
+void keyCont_keyMode321_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 321, '+', &state_getU2W, 0, SERVO_INCREMENT);
+}
+void keyCont_keyMode321_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 321, '-', &state_getU2W, 0, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode322_plus_servosForward(void** state) {
+    // 322 moves both arms
+    keyCont_keyModeN_charPressed_servoEngaged(state, 322, '+', &state_getU2W, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode322_minus_servosBackward(void** state) {
+    // 322 moves both arms
+    keyCont_keyModeN_charPressed_servoEngaged(state, 322, '-', &state_getU2W, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
+// 400, 401, 402 ankles
+void keyCont_keyMode400_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 400, '+', &state_getA0W, SERVO_INCREMENT, 0);
+}
+void keyCont_keyMode400_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 400, '-', &state_getA0W, -SERVO_INCREMENT, 0);
+}
+
+void keyCont_keyMode401_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 401, '+', &state_getA0W, 0, SERVO_INCREMENT);
+}
+void keyCont_keyMode401_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 401, '-', &state_getA0W, 0, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode402_plus_servosForward(void** state) {
+    // 402 moves both ankles
+    keyCont_keyModeN_charPressed_servoEngaged(state, 402, '+', &state_getA0W, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode402_minus_servosBackward(void** state) {
+    // 402 moves both ankles
+    keyCont_keyModeN_charPressed_servoEngaged(state, 402, '-', &state_getA0W, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
+// 410, 411, 412
+void keyCont_keyMode410_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 410, '+', &state_getA1W, SERVO_INCREMENT, 0);
+}
+void keyCont_keyMode410_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 410, '-', &state_getA1W, -SERVO_INCREMENT, 0);
+}
+
+void keyCont_keyMode411_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 411, '+', &state_getA1W, 0, SERVO_INCREMENT);
+}
+void keyCont_keyMode411_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 411, '-', &state_getA1W, 0, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode412_plus_servosForward(void** state) {
+    // 412 moves both ankles
+    keyCont_keyModeN_charPressed_servoEngaged(state, 412, '+', &state_getA1W, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode412_minus_servosBackward(void** state) {
+    // 412 moves both ankles
+    keyCont_keyModeN_charPressed_servoEngaged(state, 412, '-', &state_getA1W, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
+// 500, 501, 502 knees
+void keyCont_keyMode500_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 500, '+', &state_getHW, SERVO_INCREMENT, 0);
+}
+void keyCont_keyMode500_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 500, '-', &state_getHW, -SERVO_INCREMENT, 0);
+}
+
+void keyCont_keyMode501_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 501, '+', &state_getHW, 0, SERVO_INCREMENT);
+}
+void keyCont_keyMode501_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 501, '-', &state_getHW, 0, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode502_plus_servosForward(void** state) {
+    // 502 moves both knees
+    keyCont_keyModeN_charPressed_servoEngaged(state, 502, '+', &state_getHW, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode502_minus_servosBackward(void** state) {
+    // 502 moves both knees
+    keyCont_keyModeN_charPressed_servoEngaged(state, 502, '-', &state_getHW, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
+// 600, 601, 602 elbows
+void keyCont_keyMode600_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 600, '+', &state_getEW, SERVO_INCREMENT, 0);
+}
+void keyCont_keyMode600_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 600, '-', &state_getEW, -SERVO_INCREMENT, 0);
+}
+
+void keyCont_keyMode601_plus_servoForward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 601, '+', &state_getEW, 0, SERVO_INCREMENT);
+}
+void keyCont_keyMode601_minus_servoBackward(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 601, '-', &state_getEW, 0, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode602_plus_servosForward(void** state) {
+    // 602 moves both elbows
+    keyCont_keyModeN_charPressed_servoEngaged(state, 602, '+', &state_getEW, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode602_minus_servosBackward(void** state) {
+    // 602 moves both elbows
+    keyCont_keyModeN_charPressed_servoEngaged(state, 602, '-', &state_getEW, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
+// 700, 701 head
+void keyCont_keyMode700_plus_headRight(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 700, '+', &state_getHEADW, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode700_minus_headLeft(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 700, '-', &state_getHEADW, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode701_plus_headRight(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 701, '+', &state_getHEADW, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode701_minus_headLeft(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 701, '-', &state_getHEADW, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
+// 800, 801 waist
+void keyCont_keyMode800_plus_waistRight(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 800, '+', &state_getWESTW, SERVO_INCREMENT, SERVO_INCREMENT);
+}
+void keyCont_keyMode800_minus_waistLeft(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 800, '-', &state_getWESTW, -SERVO_INCREMENT, -SERVO_INCREMENT);
+}
+
+void keyCont_keyMode801_plus_waistAsIs(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 801, '+', &state_getWESTW, 0, 0);
+}
+void keyCont_keyMode801_minus_waistAsIs(void** state) {
+    keyCont_keyModeN_charPressed_servoEngaged(state, 801, '-', &state_getWESTW, 0, 0);
+}
 
 #pragma endregion // !keyMode between 200..800: '+', '-'
-
