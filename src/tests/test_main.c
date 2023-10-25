@@ -1,10 +1,13 @@
+#include <string.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <setjmp.h>
 #include <cmocka.h>
 #include <kcb5.h>
+#include <uart.h>
 #include "../main.h"
+#include "test_keyCont.h"
 
 static void movSv_whenMotCtLessThan1_stopsMoving(void** state) {
     // arrange
@@ -186,5 +189,11 @@ int main(void) {
         cmocka_unit_test(uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWithlegLength),
     };
 
-    return cmocka_run_group_tests(tests, NULL, NULL);
+    int keyContRc = test_keyCont();
+    if (keyContRc)
+    {
+        return keyContRc;
+    }
+
+    return cmocka_run_group_tests_name("general", tests, NULL, NULL);
 }
