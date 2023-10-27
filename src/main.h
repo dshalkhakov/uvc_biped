@@ -102,5 +102,7 @@ extern void counterCont(core_t* core);
 extern void walk(core_t* core, state_t* state);
 extern void keyCont(input_t* input, core_t* core, state_t* state);
 extern int32_t main_init(state_t* state, core_t* core, input_t* input);
+extern void state_init(state_t* state);
+extern void core_init(core_t* core);
 
 extern int controllerMain();

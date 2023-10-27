@@ -982,38 +982,68 @@ dd2:
 	}
 }
 
+void state_init(state_t* state) {
+	state->K0W[0] = 0;			// 股関節前後方向右書込用 For writing right hip joint anteroposterior
+	state->K1W[0] = 0;			// 股関節横方向右書込用 For hip joint lateral right writing
+	state->K2W[0] = 0;			// 股関節横方向右書込用 For hip joint lateral right writing
+	state->HW[0] = 0;			// 膝関節右書込用 For knee joint right writing
+	state->A0W[0] = 0;			// 足首上下方向右書込用 For ankle upper and lower direction right writing
+	state->A1W[0] = 0;			// 足首横方向右書込用 For ankle lateral right writing 
+	state->U0W[0] = -5400;		// 肩前後方向右書込用 For shoulder front-back direction right writing
+	state->U1W[0] = 0;			// 肩横後方向右書込用 For shoulder horizontal backward right writing
+	state->U2W[0] = 0;			// 肩ヨー向右書込用 For shoulder yaw direction right writing
+	state->EW[0] = 0;			// 肘右書込用 For writing on the right elbow
+	state->WESTW = 0;			// 腰回転書込用 For writing waist rotation
 
+	state->K0W[1] = 0;			// 股関節前後方向左書込用 For writing left hip joint anteroposterior direction
+	state->K1W[1] = 0;			// 股関節横方向左書込用 For hip joint lateral left writing
+	state->K2W[1] = 0;			// 股関節横方向左書込用 For hip joint lateral left writing
+	state->HW[1] = 0;			// 膝関節左書込用 For knee joint left writing
+	state->A0W[1] = 0;			// 足首上下方向左書込用 For writing in the upper and lower direction of the left ankle
+	state->A1W[1] = 0;			// 足首横方向左書込用 For ankle lateral left writing
+	state->U0W[1] = -5400;		// 肩前後方向左書込用 For writing on the left in the shoulder anteroposterior direction
+	state->U1W[1] = 0;			// 肩横後方向左書込用 Shoulder horizontal backward direction left writing
+	state->U2W[1] = 0;			// 肩ヨー向左書込用 For shoulder yaw direction left writing
+	state->EW[1] = 0;			// 肘左書込用  For elbow left writing
+	state->HEADW = 0;			// 頭回転書込用 For head rotation writing
+}
 
+void core_init(core_t* core) {
+	core->LEDct = 0;	// LED点灯カウンタ LED lighting counter
+
+	core->tBak = 0;
+	core->pitchi = 0;
+	core->tNow = 0;
+
+	core->p_ofs = 0;
+	core->r_ofs = 0;
+	core->ir = 0;
+	core->ip = 0;
+	core->irb = 0;
+	core->ipb = 0;
+
+	core->motCt = 100;
+	core->cycle = 10000;
+	core->mode = 710;
+	core->pitch_gyrg = 0.08;
+	core->roll_gyrg = 0.1;
+
+	core->swMax = 25;//22
+	core->fhMax = 35;
+	core->walkCtLim = 3;
+}
+
+void input_init(input_t* input) {
+	input->kn = 0;
+	input->keyMode = 0;
+}
 
 // **************************************************************************
 // *************** Main routine *********************************************
 // **************************************************************************
 int32_t main_init(state_t* state, core_t* core, input_t* input) {
 
-	state->K0W[0]=0;			// 股関節前後方向右書込用 For writing right hip joint anteroposterior
-	state->K1W[0]=0;			// 股関節横方向右書込用 For hip joint lateral right writing
-	state->K2W[0]=0;			// 股関節横方向右書込用 For hip joint lateral right writing
-	state->HW [0]=0;			// 膝関節右書込用 For knee joint right writing
-	state->A0W[0]=0;			// 足首上下方向右書込用 For ankle upper and lower direction right writing
-	state->A1W[0]=0;			// 足首横方向右書込用 For ankle lateral right writing 
-	state->U0W[0]=-5400;		// 肩前後方向右書込用 For shoulder front-back direction right writing
-	state->U1W[0]=0;			// 肩横後方向右書込用 For shoulder horizontal backward right writing
-	state->U2W[0]=0;			// 肩ヨー向右書込用 For shoulder yaw direction right writing
-	state-> EW[0]=0;			// 肘右書込用 For writing on the right elbow
-	state-> WESTW=0;			// 腰回転書込用 For writing waist rotation
-
-	state->K0W[1]=0;			// 股関節前後方向左書込用 For writing left hip joint anteroposterior direction
-	state->K1W[1]=0;			// 股関節横方向左書込用 For hip joint lateral left writing
-	state->K2W[1]=0;			// 股関節横方向左書込用 For hip joint lateral left writing
-	state->HW [1]=0;			// 膝関節左書込用 For knee joint left writing
-	state->A0W[1]=0;			// 足首上下方向左書込用 For writing in the upper and lower direction of the left ankle
-	state->A1W[1]=0;			// 足首横方向左書込用 For ankle lateral left writing
-	state->U0W[1]=-5400;		// 肩前後方向左書込用 For writing on the left in the shoulder anteroposterior direction
-	state->U1W[1]=0;			// 肩横後方向左書込用 Shoulder horizontal backward direction left writing
-	state->U2W[1]=0;			// 肩ヨー向左書込用 For shoulder yaw direction left writing
-	state-> EW[1]=0;			// 肘左書込用  For elbow left writing
-	state-> HEADW=0;			// 頭回転書込用 For head rotation writing
-
+	state_init(state);
 
 	///////////////////////
 	//// タイマの初期化 Initializing the timer ////
@@ -1188,31 +1218,9 @@ int32_t main_init(state_t* state, core_t* core, input_t* input) {
 	//// 変数初期化 Variable initialization ////
 	////////////////////
 
-	core->LEDct=0;	// LED点灯カウンタ LED lighting counter
+	core_init(core);
 
-	core->tBak=0;
-	core->pitchi=0;
-	core->tNow=0;
-
-	core->p_ofs=0;
-	core->r_ofs=0;
-	core->ir=0;
-	core->ip=0;
-	core->irb=0;
-	core->ipb=0;
-
-	input->kn=0;
-
-	core->motCt=100;
-	input->keyMode=0;
-	core->cycle=10000;
-	core->mode=710;
-	core->pitch_gyrg=0.08;
-	core->roll_gyrg=0.1;
-
-	core->swMax=25;//22
-	core->fhMax=35;
-	core->walkCtLim=3;
+	input_init(input);
 
 	return i;
 }

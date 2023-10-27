@@ -268,6 +268,91 @@ static void main_init_doesFoo(void** state) {
     assert_true(1);
 }
 
+// not sure if this invariant name is correct tho
+void state_init_setsBothShouldersBackwards(void** state) {
+    // arrange
+    state_t st;
+
+    // act
+    state_init(&st);
+
+    // assert
+    assert_int_equal(-5400, st.U0W[0]);
+    assert_int_equal(-5400, st.U0W[1]);
+}
+
+void state_init_zeroesServos(void** state) {
+    // arrange
+    state_t st;
+
+    // act
+    state_init(&st);
+
+    // assert
+    assert_int_equal(st.K0W[0], 0);			// For writing right hip joint anteroposterior
+    assert_int_equal(st.K1W[0], 0);			// For hip joint lateral right writing
+    assert_int_equal(st.K2W[0], 0);			// For hip joint lateral right writing
+    assert_int_equal(st.HW[0], 0);			// For knee joint right writing
+    assert_int_equal(st.A0W[0], 0);			// For ankle upper and lower direction right writing
+    assert_int_equal(st.A1W[0], 0);			// For ankle lateral right writing 
+    assert_int_equal(st.U1W[0], 0);			// For shoulder horizontal backward right writing
+    assert_int_equal(st.U2W[0], 0);			// For shoulder yaw direction right writing
+    assert_int_equal(st.EW[0], 0);			// For writing on the right elbow
+    assert_int_equal(st.WESTW, 0);			// For writing waist rotation
+
+    assert_int_equal(st.K0W[1], 0);			// For writing left hip joint anteroposterior direction
+    assert_int_equal(st.K1W[1], 0);			// For hip joint lateral left writing
+    assert_int_equal(st.K2W[1], 0);			// For hip joint lateral left writing
+    assert_int_equal(st.HW[1], 0);			// For knee joint left writing
+    assert_int_equal(st.A0W[1], 0);			// For writing in the upper and lower direction of the left ankle
+    assert_int_equal(st.A1W[1], 0);			// For ankle lateral left writing
+    assert_int_equal(st.U1W[1], 0);			// Shoulder horizontal backward direction left writing
+    assert_int_equal(st.U2W[1], 0);			// For shoulder yaw direction left writing
+    assert_int_equal(st.EW[1], 0);			// For elbow left writing
+    assert_int_equal(st.HEADW, 0);			// For head rotation writing
+}
+
+void core_init_zeroesValue(void** state) {
+    // arrange
+    core_t core;
+
+    // act
+    core_init(&core);
+
+    // assert
+    assert_int_equal(core.LEDct, 0);
+
+    assert_int_equal(core.tBak, 0);
+    assert_int_equal(core.pitchi, 0);
+    assert_int_equal(core.tNow, 0);
+
+    assert_int_equal(core.p_ofs, 0);
+    assert_int_equal(core.r_ofs, 0);
+    assert_int_equal(core.ir, 0);
+    assert_int_equal(core.ip, 0);
+    assert_int_equal(core.irb, 0);
+    assert_int_equal(core.ipb, 0);
+}
+
+void core_init_setsInitialValues(void** state) {
+    // arrange
+    core_t core;
+
+    // act
+    core_init(&core);
+
+    // assert
+    assert_int_equal(core.motCt, 100);
+    assert_int_equal(core.cycle, 10000);
+    assert_int_equal(core.mode, 710);
+    assert_float_equal(core.pitch_gyrg, 0.08f, 0.001f);
+    assert_float_equal(core.roll_gyrg, 0.1, 0.001f);
+
+    assert_float_equal(core.swMax, 25, 0.1f);
+    assert_float_equal(core.fhMax, 35, 0.1f);
+    assert_int_equal(core.walkCtLim, 3);
+}
+
 int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(movSv_whenMotCtLessThan1_stopsMoving),
@@ -279,6 +364,10 @@ int main(void) {
         cmocka_unit_test(uvcSub_legLiftHeightLessThanMaxLiftHeight_noRoll_legLengthRestored),
         cmocka_unit_test(uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWithlegLength),
         cmocka_unit_test(main_init_doesFoo),
+        cmocka_unit_test(state_init_setsBothShouldersBackwards),
+        cmocka_unit_test(state_init_zeroesServos),
+        cmocka_unit_test(core_init_setsInitialValues),
+        cmocka_unit_test(core_init_zeroesValue),
     };
 
     int keyContRc = test_keyCont();
