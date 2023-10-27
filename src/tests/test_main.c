@@ -177,6 +177,97 @@ static void uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWith
 
 // TODO same as uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWithlegLength, but not capped to 140
 
+static void main_init_doesFoo(void** state) {
+    // arrange
+    state_t st;
+    core_t core;
+    input_t input;
+
+    // timer invocation #1 in first delay()
+    will_return(__wrap_timer_init, true);
+    will_return(__wrap_timer_write, true);
+    will_return(__wrap_timer_start, true);
+    will_return(__wrap_timer_read, -1);
+
+    expect_any(__wrap_uart_init, port);
+    expect_any(__wrap_uart_init, mode);
+    expect_any(__wrap_uart_init, baudrate);
+    expect_any(__wrap_uart_init, data);
+    expect_any(__wrap_uart_init, parity);
+    will_return(__wrap_uart_init, true);
+
+    // i2c_read call #1
+    expect_any(__wrap_i2c_read, i2c_address);
+    expect_any(__wrap_i2c_read, command);
+    expect_any(__wrap_i2c_read, c_size);
+    will_return(__wrap_i2c_read, 0xA0);
+    will_return(__wrap_i2c_read, 1);
+    expect_any(__wrap_i2c_read, r_size);
+
+    // timer invocation #2 in second delay()
+    will_return(__wrap_timer_write, true);
+    will_return(__wrap_timer_start, true);
+    will_return(__wrap_timer_read, -1);
+
+    // timer invocation #3 in third delay()
+    will_return(__wrap_timer_write, true);
+    will_return(__wrap_timer_start, true);
+    will_return(__wrap_timer_read, -1);
+
+    // i2c_read call #2
+    expect_any(__wrap_i2c_read, i2c_address);
+    expect_any(__wrap_i2c_read, command);
+    expect_any(__wrap_i2c_read, c_size);
+    will_return(__wrap_i2c_read, 0xA0);
+    will_return(__wrap_i2c_read, 1);
+    expect_any(__wrap_i2c_read, r_size);
+
+    // timer invocation #4 in fourth delay(50)
+    will_return(__wrap_timer_write, true);
+    will_return(__wrap_timer_start, true);
+    will_return(__wrap_timer_read, -1);
+
+    // timer invocation #5 in fourth delay(50)
+    will_return(__wrap_timer_write, true);
+    will_return(__wrap_timer_start, true);
+    will_return(__wrap_timer_read, -1);
+
+    // timer invocation #6 in fourth delay(50)
+    will_return(__wrap_timer_write, true);
+    will_return(__wrap_timer_start, true);
+    will_return(__wrap_timer_read, -1);
+
+    // timer invocation #7 in fourth delay(50)
+    will_return(__wrap_timer_write, true);
+    will_return(__wrap_timer_start, true);
+    will_return(__wrap_timer_read, -1);
+
+    // timer invocation #8 in fourth delay(50)
+    will_return(__wrap_timer_write, true);
+    will_return(__wrap_timer_start, true);
+    will_return(__wrap_timer_read, -1);
+
+    // timer invocation #9 in fourth delay(50)
+    will_return(__wrap_timer_write, true);
+    will_return(__wrap_timer_start, true);
+    will_return(__wrap_timer_read, -1);
+
+    // timer invocation #10 in fourth delay(50)
+    will_return(__wrap_timer_write, true);
+    will_return(__wrap_timer_start, true);
+    will_return(__wrap_timer_read, -1);
+
+    // timer invocation #11
+    will_return(__wrap_timer_write, true);
+    will_return(__wrap_timer_start, true);
+
+    // act
+    int ret = main_init(&st, &core, &input);
+
+    // assert
+    assert_true(1);
+}
+
 int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(movSv_whenMotCtLessThan1_stopsMoving),
@@ -187,6 +278,7 @@ int main(void) {
         cmocka_unit_test(uvcSub_whenFwctIs11_supportLegIsReturnedWithMaxValue_inLRdirection),
         cmocka_unit_test(uvcSub_legLiftHeightLessThanMaxLiftHeight_noRoll_legLengthRestored),
         cmocka_unit_test(uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWithlegLength),
+        cmocka_unit_test(main_init_doesFoo),
     };
 
     int keyContRc = test_keyCont();

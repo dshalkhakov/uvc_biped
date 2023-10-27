@@ -988,7 +988,7 @@ dd2:
 // **************************************************************************
 // *************** Main routine *********************************************
 // **************************************************************************
-int mainRoutine(state_t* state, core_t* core, input_t* input){
+int32_t main_init(state_t* state, core_t* core, input_t* input) {
 
 	state->K0W[0]=0;			// 股関節前後方向右書込用 For writing right hip joint anteroposterior
 	state->K1W[0]=0;			// 股関節横方向右書込用 For hip joint lateral right writing
@@ -1123,7 +1123,7 @@ int mainRoutine(state_t* state, core_t* core, input_t* input){
 	state->U2W[0]=-i+7500;
 	i=ics_set_pos ( UART_SIO2, 4, 0 );	// ER
 	state->EW [0]=i-4800;
-	i=ics_set_pos ( UART_SIO4, 1, 0 );	// U0Lバンザイ位置
+	i=ics_set_pos ( UART_SIO4, 1, 0 );	// U0Lバンザイ位置 Banzai position
 	state->U0W[1]=i-9320;
 	i=ics_set_pos ( UART_SIO4, 2, 0 );	// U1L -2700
 	state->U1W[1]=i-4850;
@@ -1214,7 +1214,11 @@ int mainRoutine(state_t* state, core_t* core, input_t* input){
 	core->fhMax=35;
 	core->walkCtLim=3;
 
+	return i;
+}
 
+void main_loop(state_t* state, core_t* core, input_t* input, int initialI) {
+	int32_t i = initialI;
 
 //----------------------------------------------------------------------------------
 	////////////////////////////////////////////////
@@ -1418,5 +1422,8 @@ pio_write (PIO_T2, HIGH);	// OFF(wait時間確認) -- OFF (check wait time)
 
 int controllerMain()
 {
-	return mainRoutine(&state, &core, &input);
+	int32_t i = main_init(&state, &core, &input);
+	main_loop(&state, &core, &input, i);
+
+	return 0;
 }
