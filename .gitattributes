@@ -1,2 +1,5 @@
 src/main.c text working-tree-encoding=UTF-8 eol=lf
-
+sim/biped.cpp text working-tree-encoding=UTF-8 eol=lf
+sim/biped.h text working-tree-encoding=UTF-8 eol=lf
+sim/core.cpp text working-tree-encoding=UTF-8 eol=lf
+sim/core.h text working-tree-encoding=UTF-8 eol=lf
