@@ -47,20 +47,20 @@ void core::footCont(state_t* state, float x,float y,float h,int s){
 	k = sqrt(x*x+(y*y+h*h));	// A0からK0までの距離 Distance from A0 to K0
 	if(k>LEG)k=LEG;				// 計算エラー回避 Avoid calculation errors
 
-	x = asin(x/k);			// K0脚振り角度 Update in June 1,2021 :Before revision( x=asin(x/LEG) )
+	float x0 = asin(x/k);			// K0脚振り角度 Update in June 1,2021 :Before revision( x=asin(x/LEG) )
 							// K0 leg swing angle Update in June 1,2021 :Before revision( x=asin(x/LEG) )
 
-	k = acos(k/LEG);			// K0膝曲げ角度 K0 knee bending angle
+	float k0 = acos(k/LEG);			// K0膝曲げ角度 K0 knee bending angle
 
 	state->fbAV=0;						// UVC評価の為、ジャイロは無効にする Gyro is disabled for UVC evaluation
 	state->lrAV=0;
-	state->K0W[s]	= k+x+dvi+dvo;
-	state->HW[s]	= k*2;
-	state->A0W[s]	= k-x-0.003*state->fbAV;
-	k = atan(y/h);				// K1角度 K1 angle
-	state->K1W[s] = k;
-	if(s==0)	state->A1W[s] = -k-0.002*state->lrAV;
-	else		state->A1W[s] = -k+0.002*state->lrAV;
+	state->K0W[s]	= k0+x0+dvi+dvo;
+	state->HW[s]	= k0*2;
+	state->A0W[s]	= k0-x0-0.003*state->fbAV;
+	float k1 = atan(y/h);				// K1角度 K1 angle
+	state->K1W[s] = k1;
+	if(s==0)	state->A1W[s] = -k1-0.002*state->lrAV;
+	else		state->A1W[s] = -k1+0.002*state->lrAV;
 }
 
 // *********************
