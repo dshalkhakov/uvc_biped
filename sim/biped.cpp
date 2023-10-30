@@ -290,7 +290,6 @@ static void simLoop (int pause){
 	static int mag = 3;
 
 	double sides[3];
-	dJointFeedback *fb;
 	dVector3 headVel1;
 	dVector3 headVel2;
 
@@ -307,10 +306,10 @@ static void simLoop (int pause){
 		dJointGroupEmpty (world_contactgroup);		// ジョイントグループを空にする Empty the joint group
 
 		//******** 足裏圧力検出 Sole pressure detection ********
-		fb = dJointGetFeedback(biped.soleJ_r.jointId);
-		state.asiPress_r = fb->f1[2];				// 右足(足首Ｚ)圧力 Right foot (ankle Z) pressure
-		fb = dJointGetFeedback(biped.soleJ_l.jointId);
-		state.asiPress_l = fb->f1[2];				// 左足(足首Ｚ)圧力 Left foot (ankle Z) pressure
+		dJointFeedback* fb1 = dJointGetFeedback(biped.soleJ_r.jointId);
+		state.asiPress_r = fb1->f1[2];				// 右足(足首Ｚ)圧力 Right foot (ankle Z) pressure
+		dJointFeedback* fb2 = dJointGetFeedback(biped.soleJ_l.jointId);
+		state.asiPress_l = fb2->f1[2];				// 左足(足首Ｚ)圧力 Left foot (ankle Z) pressure
 
 		//******** 頭前後左右角度検出 Head front, back, left, right, and right angles ********
 		temp_Rot = dBodyGetRotation(biped.HEADT.bodyId);		// 回転行列取得 Get rotation matrix
@@ -394,7 +393,7 @@ static void setBody (bodyStr *b, bodyType_t k,    bodyColor_t c, double l, doubl
 
 	z += 20;
 
-	// スケール調整 scale adjustment
+	// スケール調整 convert cm to m
 	l/=1000;
 	w/=1000;
 	h/=1000;
@@ -471,12 +470,14 @@ static void setBody (bodyStr *b, bodyType_t k,    bodyColor_t c, double l, doubl
 
 //---------------------------------- setJoint ---------------------------------------
 //	ジョイントを生成する generate joint
+// Parameters x, y, z are in cm
 
 static void setJoint (jointStr *j, jointType_t k, bodyStr *b1, bodyStr *b2, axis_t a, double x, double y, double z){
 // 引数：　            対象Joint　Joint種類   Body番号1  　Body番号2　 設定軸  前後位置  左右位置　上下位置
 // Argument:      Target Joint  Joint type  Body #1    Body #2  Setting axis Front-back Left-right Up-down
-	z+= 20;
+	z+= 20; // place 20cm above ground
 
+	// convert from cm to m
 	x/=1000;
 	y/=1000;
 	z/=1000;
@@ -601,28 +602,28 @@ static void createBody (biped_t* biped){
 //	######################
 //	####ジョイント生成 Joint generation ####
 //	######################
-//							種類		B番号1		B番号2	軸			X		Y		Z
-//                        Type   B number 1 B number 2 Axis         X       Y       Z
+//								種類				B番号1			B番号2			軸			X		Y		Z
+//						        Type			B number 1		B number 2		Axis        X       Y       Z
 
-	setJoint(&biped->HEADJ,		JOINT_FIXED,	&biped->HEADT,	&biped->DOU,		AXIS_Z,		0,		0,		360);	// 頭固定用 For head fixation
+	setJoint(&biped->HEADJ,		JOINT_FIXED,	&biped->HEADT,	&biped->DOU,	AXIS_Z,		0,		0,		360);	// 頭固定用 For head fixation
 	setJoint(&biped->K0J_r,		JOINT_HINGE,	&biped->K1_r,	&biped->K0_r,	AXIS_Y,		0,		-fw,	195);	// 股関節ピッチ hip joint pitch
 	setJoint(&biped->K0J_l,		JOINT_HINGE,	&biped->K1_l,	&biped->K0_l,	AXIS_Y,		0,		fw,		195);
-	setJoint(&biped->K1J_r,		JOINT_HINGE,	&biped->DOU,		&biped->K1_r,	AXIS_X,		0,		-fw+11,	195);	// 股関節ロール hip roll
-	setJoint(&biped->K1J_l,		JOINT_HINGE,	&biped->K1_l,	&biped->DOU,		AXIS_X,		0,		fw-11,	195);
-	setJoint(&biped->MJ_r,		JOINT_FIXED,	&biped->M_r,		&biped->K0_r,	AXIS_Y,		0,		-fw,	128);	// 腿固定用 for leg fixation
-	setJoint(&biped->MJ_l,		JOINT_FIXED,	&biped->M_l,		&biped->K0_l,	AXIS_Y,		0,		fw,		128);
-	setJoint(&biped->M2J_r,		JOINT_FIXED,	&biped->H_r,		&biped->M_r,		AXIS_Y,		0,		-fw,	128);	// 腿固定用 for leg fixation
-	setJoint(&biped->M2J_l,		JOINT_FIXED,	&biped->H_l,		&biped->M_l,		AXIS_Y,		0,		fw,		128);
-	setJoint(&biped->HJ_r,		JOINT_HINGE,	&biped->S_r,		&biped->H_r,		AXIS_Y,		0,		-fw,	105);	// 膝関節 Knee fixation
-	setJoint(&biped->HJ_l,		JOINT_HINGE,	&biped->S_l,		&biped->H_l,		AXIS_Y,		0,		fw,		105);
-	setJoint(&biped->SJ_r,		JOINT_FIXED,	&biped->S_r,		&biped->A0_r,	AXIS_Y,		0,		-fw,	60);	// 脛固定用 For shin fixation
-	setJoint(&biped->SJ_l,		JOINT_FIXED,	&biped->S_l,		&biped->A0_l,	AXIS_Y,		0,		fw,		60);
+	setJoint(&biped->K1J_r,		JOINT_HINGE,	&biped->DOU,	&biped->K1_r,	AXIS_X,		0,		-fw+11,	195);	// 股関節ロール hip roll
+	setJoint(&biped->K1J_l,		JOINT_HINGE,	&biped->K1_l,	&biped->DOU,	AXIS_X,		0,		fw-11,	195);
+	setJoint(&biped->MJ_r,		JOINT_FIXED,	&biped->M_r,	&biped->K0_r,	AXIS_Y,		0,		-fw,	128);	// 腿固定用 for leg fixation
+	setJoint(&biped->MJ_l,		JOINT_FIXED,	&biped->M_l,	&biped->K0_l,	AXIS_Y,		0,		fw,		128);
+	setJoint(&biped->M2J_r,		JOINT_FIXED,	&biped->H_r,	&biped->M_r,	AXIS_Y,		0,		-fw,	128);	// 腿固定用 for leg fixation
+	setJoint(&biped->M2J_l,		JOINT_FIXED,	&biped->H_l,	&biped->M_l,	AXIS_Y,		0,		fw,		128);
+	setJoint(&biped->HJ_r,		JOINT_HINGE,	&biped->S_r,	&biped->H_r,	AXIS_Y,		0,		-fw,	105);	// 膝関節 Knee fixation
+	setJoint(&biped->HJ_l,		JOINT_HINGE,	&biped->S_l,	&biped->H_l,	AXIS_Y,		0,		fw,		105);
+	setJoint(&biped->SJ_r,		JOINT_FIXED,	&biped->S_r,	&biped->A0_r,	AXIS_Y,		0,		-fw,	60);	// 脛固定用 For shin fixation
+	setJoint(&biped->SJ_l,		JOINT_FIXED,	&biped->S_l,	&biped->A0_l,	AXIS_Y,		0,		fw,		60);
 	setJoint(&biped->A0J_r,		JOINT_HINGE,	&biped->A0_r,	&biped->A1_r,	AXIS_Y,		0,		-fw,	15);	// 足首ピッチ Ankle pitch
 	setJoint(&biped->A0J_l,		JOINT_HINGE,	&biped->A0_l,	&biped->A1_l,	AXIS_Y,		0,		fw,		15);
 	setJoint(&biped->A1J_r,		JOINT_HINGE,	&biped->A1_r,	&biped->sole_r,	AXIS_X,		0,		-fw+11,	15);	// 足首ロール Ankle roll
 	setJoint(&biped->A1J_l,		JOINT_HINGE,	&biped->sole_l,	&biped->A1_l,	AXIS_X,		0,		fw-11,	15);
-	setJoint(&biped->soleJ_r,	JOINT_SLIDER,	&biped->solep_r,	&biped->sole_r,	AXIS_X,		0,		-fw,	6);		// ソール圧力センサ sole pressure sensor
-	setJoint(&biped->soleJ_l,	JOINT_SLIDER,	&biped->solep_l,	&biped->sole_l,	AXIS_X,		0,		fw,		6);
+	setJoint(&biped->soleJ_r,	JOINT_SLIDER,	&biped->solep_r,&biped->sole_r,	AXIS_X,		0,		-fw,	6);		// ソール圧力センサ sole pressure sensor
+	setJoint(&biped->soleJ_l,	JOINT_SLIDER,	&biped->solep_l,&biped->sole_l,	AXIS_X,		0,		fw,		6);
 
 	dJointSetFeedback(biped->soleJ_r.jointId,			&feedback[0]);
 	dJointSetFeedback(biped->soleJ_l.jointId,			&feedback[1]);
