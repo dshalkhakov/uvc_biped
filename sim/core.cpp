@@ -20,6 +20,12 @@ Corrected (K0脚振り角度) (K0 leg swing angle)
 #include  "core.h"
 
 #define LEG 180.0	// Update in June 1,2021 :Before revision(#define LEG 190.0)
+#define MAX_SWING_WIDTH	(100.0)
+#define MAX_DYI			(0.0)
+#define MIN_DYI			(-30.0)
+#define DYI_DAMPING_FACTOR (0.90)
+#define ROLL_DISPLACEMENT	(193)
+#define PITCH_DISPLACEMENT	(130)
 
 using namespace std;
 
@@ -67,8 +73,6 @@ void core::footCont(state_t* state, float x,float y,float h,int s){
 // **  歩行制御メイン Walking control main  **
 // *********************
 void core::walk(state_t* state, input_t* input){
-	short i,j;
-
 	switch(mode){
 
 	////////////////////////
@@ -128,15 +132,15 @@ void core::walk(state_t* state, input_t* input){
 
 		if((jikuasi==0 && state->asiPress_r<-0.1 && state->asiPress_l>-0.1) ||
 			 (jikuasi==1 && state->asiPress_r>-0.1 && state->asiPress_l<-0.1)){
-			float rollDispl = 1.5 * 193 * sin(state->lrRad);	//// 左右方向変位 Lateral displacement (roll) ////
+			float rollDispl = 1.5 * ROLL_DISPLACEMENT * sin(state->lrRad);	//// 左右方向変位 Lateral displacement (roll) ////
 			if(jikuasi==0)	dyi += rollDispl;
 			else			dyi -= rollDispl;
-			if(dyi>0)		dyi=0;
-			if(dyi<-30)		dyi=-30;
-			float pitchDispl = 1.5 * 130 * sin(state->fbRad);	//// 前後方向変位 Anteroposterior displacement (pitch) ////
+			if(dyi>MAX_DYI)	dyi=MAX_DYI;
+			if(dyi<MIN_DYI)	dyi=MIN_DYI;
+			float pitchDispl = 1.5 * PITCH_DISPLACEMENT * sin(state->fbRad);	//// 前後方向変位 Anteroposterior displacement (pitch) ////
 			dxi += pitchDispl;
 		}
-		dyi*=0.90;						// 減衰 damping
+		dyi*=DYI_DAMPING_FACTOR;						// 減衰 damping
 		if(input->uvcOff==1){
 			dxi=0;
 			dyi=0;
@@ -180,19 +184,19 @@ void core::walk(state_t* state, input_t* input){
 			)/2;										// 0-1の∫的カーブ 0-1 ∫ curve
 			dx[jikuasi^1] = fwr1+ forwardSwing * ( fw-dxi-fwr1 );
 		}
-		if(dx[jikuasi]> 100){							// 振り出し幅リミット swing width limit
-			dxi		   -= dx[jikuasi]-100;
-			dx[jikuasi] = 100;
+		if(dx[jikuasi]> MAX_SWING_WIDTH){							// 振り出し幅リミット swing width limit
+			dxi		   -= dx[jikuasi]-MAX_SWING_WIDTH;
+			dx[jikuasi] = MAX_SWING_WIDTH;
 		}
-		if(dx[jikuasi]<-100){
-			dxi		   -= dx[jikuasi]+100;
-			dx[jikuasi] =-100;
+		if(dx[jikuasi]<-MAX_SWING_WIDTH){
+			dxi		   -= dx[jikuasi]+MAX_SWING_WIDTH;
+			dx[jikuasi] =-MAX_SWING_WIDTH;
 		}
-		if(dx[jikuasi^1]> 100) dx[jikuasi^1] = 100;	// 振り出し幅リミット抑制 Suppression of swing width limit
-		if(dx[jikuasi^1]<-100) dx[jikuasi^1] =-100;
+		if(dx[jikuasi^1]> MAX_SWING_WIDTH) dx[jikuasi^1] = MAX_SWING_WIDTH;	// 振り出し幅リミット抑制 Suppression of swing width limit
+		if(dx[jikuasi^1]<-MAX_SWING_WIDTH) dx[jikuasi^1] =-MAX_SWING_WIDTH;
 
 		//// 足上制御 foot control ////
-		i=landRate*fwctEnd;
+		short i=landRate*fwctEnd;
 		if( fwct>i ){
 			if( fwct<(fwctEnd-i)/2 ) fh = fhOfs + fhMax * sinf( M_PI*(fwct-i)/(fwctEnd-i) );
 			else					 fh = (fhMax+fhOfs) * sinf( M_PI*(fwct-i)/(fwctEnd-i) );
@@ -201,12 +205,12 @@ void core::walk(state_t* state, input_t* input){
 
 		//// 脚制御関数呼び出し Leg control function call ////
 		if(jikuasi==0){
-			footCont( state, dx[0]-adjFR	, -dy-dyi+1, autoH,		0 );
+			footCont( state, dx[0]-adjFR	, -dy-dyi+1, autoH,	0 );
 			footCont( state, dx[1]-adjFR	,  dy-dyi+1, autoH-fh,	1 );
 		}
 		else{
 			footCont( state, dx[0]-adjFR	, -dy-dyi+1, autoH-fh,	0 );
-			footCont( state, dx[1]-adjFR	,  dy-dyi+1, autoH,		1 );
+			footCont( state, dx[1]-adjFR	,  dy-dyi+1, autoH,	1 );
 		}
 
 

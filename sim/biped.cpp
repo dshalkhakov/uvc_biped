@@ -290,7 +290,6 @@ static void simLoop (int pause){
 	static int mag = 3;
 
 	double sides[3];
-	dJointFeedback *fb;
 	dVector3 headVel1;
 	dVector3 headVel2;
 
@@ -307,10 +306,10 @@ static void simLoop (int pause){
 		dJointGroupEmpty (world_contactgroup);		// ジョイントグループを空にする Empty the joint group
 
 		//******** 足裏圧力検出 Sole pressure detection ********
-		fb = dJointGetFeedback(biped.soleJ_r.jointId);
-		state.asiPress_r = fb->f1[2];				// 右足(足首Ｚ)圧力 Right foot (ankle Z) pressure
-		fb = dJointGetFeedback(biped.soleJ_l.jointId);
-		state.asiPress_l = fb->f1[2];				// 左足(足首Ｚ)圧力 Left foot (ankle Z) pressure
+		dJointFeedback* fb1 = dJointGetFeedback(biped.soleJ_r.jointId);
+		state.asiPress_r = fb1->f1[2];				// 右足(足首Ｚ)圧力 Right foot (ankle Z) pressure
+		dJointFeedback* fb2 = dJointGetFeedback(biped.soleJ_l.jointId);
+		state.asiPress_l = fb2->f1[2];				// 左足(足首Ｚ)圧力 Left foot (ankle Z) pressure
 
 		//******** 頭前後左右角度検出 Head front, back, left, right, and right angles ********
 		temp_Rot = dBodyGetRotation(biped.HEADT.bodyId);		// 回転行列取得 Get rotation matrix
