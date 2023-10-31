@@ -177,6 +177,7 @@ static void uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWith
 
 // TODO same as uvcSub_legLiftHeightLessThanMaxLiftHeight_withRoll_shockAbsorbedWithlegLength, but not capped to 140
 
+// this test is ought to be split because it checks so many things at once
 static void main_init_doesFoo(void** state) {
     // arrange
     state_t st;
@@ -265,7 +266,29 @@ static void main_init_doesFoo(void** state) {
     int ret = main_init(&st, &core, &input);
 
     // assert
-    assert_true(1);
+    assert_int_equal(ret, 7500);
+    assert_int_equal(st.K0W[0], 0);
+    assert_int_equal(st.K0W[1], 0);
+    assert_int_equal(st.K1W[0], -30);
+    assert_int_equal(st.K1W[1], 0);
+    assert_int_equal(st.K2W[0], 0);
+    assert_int_equal(st.K2W[1], 0);
+    assert_int_equal(st.HW[0], 1760);
+    assert_int_equal(st.HW[1], 1760);
+    assert_int_equal(st.A0W[0], -410);
+    assert_int_equal(st.A0W[1], -400);
+    assert_int_equal(st.A1W[0], -85);
+    assert_int_equal(st.A1W[1], 30);
+    assert_int_equal(st.U0W[0], -2765);
+    assert_int_equal(st.U0W[1], -1820);
+    assert_int_equal(st.U1W[0], 2610);
+    assert_int_equal(st.U1W[1], 2650);
+    assert_int_equal(st.U2W[0], 0);
+    assert_int_equal(st.U2W[1], 0);
+    assert_int_equal(st.EW[0], 2700);
+    assert_int_equal(st.EW[1], 2650);
+    assert_int_equal(st.HEADW, 0);
+    assert_int_equal(st.WESTW, 0);
 }
 
 // not sure if this invariant name is correct tho
@@ -353,6 +376,76 @@ void core_init_setsInitialValues(void** state) {
     assert_int_equal(core.walkCtLim, 3);
 }
 
+// TODO uvcSub
+// TODO uvcSub2
+// TODO uvc
+// TODO footUp
+// TODO swCont
+// TODO armCont
+
+// footCont
+void footCont_initialPosture_hipPitchChanged(void** state) {
+    // arrange
+    core_t core;
+    state_t st;
+
+    core_init(&core);
+    state_init(&st);
+
+    // act
+    footCont(&core, &st, 0, 0, 185, 0);
+
+    // assert
+    assert_int_equal(st.K0W[0], 50);
+    assert_int_equal(st.K0W[1], 0);
+}
+
+void footCont_initialPosture_kneeJointMoved(void** state) {
+    // arrange
+    core_t core;
+    state_t st;
+
+    core_init(&core);
+    state_init(&st);
+
+    // act
+    footCont(&core, &st, 0, 0, 185, 0);
+
+    // assert
+    assert_int_equal(st.HW[0], 100);
+    assert_int_equal(st.HW[1], 0);
+}
+
+void footCont_initialPosture_ankleMoved(void** state) {
+    // arrange
+    core_t core;
+    state_t st;
+
+    core_init(&core);
+    state_init(&st);
+
+    // act
+    footCont(&core, &st, 0, 0, 185, 0);
+
+    // assert
+    assert_int_equal(st.A0W[0], 50);
+    assert_int_equal(st.A0W[1], 0);
+}
+
+void feetCont1_doesFoo(void** state) {
+    core_t core;
+    state_t st;
+
+    core_init(&core);
+    state_init(&st);
+
+    feetCont1(&core, &st, 0, 0, 0, 0, 0);
+}
+
+// TODO feetCont2
+// TODO counterCont
+// TODO walk
+
 int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(movSv_whenMotCtLessThan1_stopsMoving),
@@ -368,12 +461,20 @@ int main(void) {
         cmocka_unit_test(state_init_zeroesServos),
         cmocka_unit_test(core_init_setsInitialValues),
         cmocka_unit_test(core_init_zeroesValue),
+        cmocka_unit_test(footCont_initialPosture_hipPitchChanged),
+        cmocka_unit_test(footCont_initialPosture_kneeJointMoved),
+        cmocka_unit_test(footCont_initialPosture_ankleMoved),
     };
 
     int keyContRc = test_keyCont();
     if (keyContRc)
     {
         return keyContRc;
+    }
+    int angleRepresentationsRc = test_angleRepresentations();
+    if (angleRepresentationsRc)
+    {
+        return angleRepresentationsRc;
     }
 
     return cmocka_run_group_tests_name("general", tests, NULL, NULL);

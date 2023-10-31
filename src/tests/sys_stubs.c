@@ -29,7 +29,7 @@ int i2c_write(unsigned char i2c_address, unsigned char address, unsigned char* d
 
 int ics_set_pos(int port, unsigned char id, unsigned short pos)
 {
-	return 0;
+	return 7500; // pretend that servo is in neutral position
 }
 
 int ics_set_param(int port, unsigned char id, unsigned char sc, unsigned char param)

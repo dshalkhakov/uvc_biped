@@ -21,7 +21,7 @@ Apply UVC to KHR.  May 8,2022 : Vre 1.0
 
 #define OFS_L 129.0			// 初期の股関節までの距離（膝カク防止） Initial distance to hip joint (to prevent knee jerk)
 #define OFS_S 213			// 初期の股関節サーボ角 Initial hip servo angle
-#define CHG_SVA 1718.9		// サーボ角に変換 Convert to servo angle
+#define CHG_SVA 1718.9		// サーボ角に変換 Convert to servo angle (60 deg)
 #define HEIGHT 185			// 185脚長 185 Leg length
 #define RET_F_LEG 3			// 遊脚追従率 Idle leg tracking rate
 #define RST_F_LEG 3			// 軸足垂直戻率 Pivot vertical return rate
@@ -1192,7 +1192,9 @@ int32_t main_init(state_t* state, core_t* core, input_t* input) {
 
 
 	/////////////////////////////
-	//// サーボストレッチ設定 Servo stretch setting ////
+	//// サーボストレッチ設定 Servo stretch setting (Soft)1 - 127(Hard) ////
+	/// From ICS3.5 Manual: Changes the retention properties of the servo motor. ///
+	/// Reducing this value reduces the retention power of the motor, making it softer like a spring ///
 	/////////////////////////////
 //	ics_set_param ( UART_SIO1, 7,ICS_STRC_SC,250);	// K0R
 //	ics_set_param ( UART_SIO3, 7,ICS_STRC_SC,250);	// K0L
