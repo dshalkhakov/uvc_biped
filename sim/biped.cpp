@@ -53,9 +53,9 @@ static	void start			();
 #define dsDrawCapsule	dsDrawCapsuleD
 #endif
 
-bipedstate_t bipedstate;
+simstate_t simstate;
 
-void bipedstate_init(bipedstate_t* state) {
+void simstate_init(simstate_t* state) {
 	// 間接角度 indirect angle
 	state->K0W[0] = 0;	// 股関節前後方向書込用 For writing in the anteroposterior direction of the hip joint
 	state->K0W[1] = 0;
@@ -105,15 +105,15 @@ static dGeomID world_ground;				// 地面 ground
 dMatrix3 world_R;
 const double* temp_Rot;		// 回転行列取得 Get rotation matrix
 static struct dJointFeedback feedback[50];	// ジョイントフィードバック構造体 Joint feedback structure
-bipedinput_t bipedinput;
+siminput_t siminput;
 
-void bipedinput_init(bipedinput_t* bipedinput) {
-	bipedinput->uvcOff = 0;		// UVC起動フラグ UVC activation flag
-	bipedinput->walkF = 0;		// 歩行フラグ	（b0:歩行  b1:未  b2:未）walk flag (b0:walk b1:not yet b2:not yet)
+void siminput_init(siminput_t* siminput) {
+	siminput->uvcOff = 0;		// UVC起動フラグ UVC activation flag
+	siminput->walkF = 0;		// 歩行フラグ	（b0:歩行  b1:未  b2:未）walk flag (b0:walk b1:not yet b2:not yet)
 
-	bipedinput->walkF = 0;
-	bipedinput->frRatI = 0;
-	bipedinput->frRatA = 0;
+	siminput->walkF = 0;
+	siminput->frRatI = 0;
+	siminput->frRatA = 0;
 }
 
 //###############  各種構造体 Various structures ###############
@@ -164,17 +164,17 @@ static void command (int cmd){
 		//// 操作 operate ////
 		case 'w':				// 歩行開始 Start walking
 			printf("Start walking\n"); // 歩行開始
-			bipedinput.walkF=0x01;
+			siminput.walkF=0x01;
 			barrier_poleJ.t_jointAngle=5;
 			break;
 
 		case '1':				//外力実験 External force experiment
 			printf("External force experiment\n"); // 外力実験
 			restart ();
-			bipedinput.fwMax=30;
-			bipedinput.frRatA=0;
-			bipedinput.frRatI=0;
-			bipedinput.fhRat=0;
+			siminput.fwMax=30;
+			siminput.frRatA=0;
+			siminput.frRatI=0;
+			siminput.fhRat=0;
 			setBody  (&barrier_base,		BODYTYPE_CYLINDER,COLOR_GREY,	260,	 0,	  0,	24,		0,	180,	110,		0,	0.01);	//遮断機棒
 			setBody  (&barrier_pole,		BODYTYPE_CYLINDER,COLOR_YELLOW,	320,	 0,	  0,	8,		0,	300,	210,		1,	0.0001);	//ボール
 			dRFromAxisAndAngle(world_R, 1, 0, 0, -M_PI_2);// 回転 rotate
@@ -188,28 +188,28 @@ static void command (int cmd){
 		case '2':				// 前進実験 forward experiment
 			printf("Forward experiment\n"); // 前進実験
 			restart ();
-			bipedinput.fwMax=30;
-			bipedinput.frRatA=0.0015;
-			bipedinput.frRatI=0;
-			bipedinput.fhRat=0;
+			siminput.fwMax=30;
+			siminput.frRatA=0.0015;
+			siminput.frRatI=0;
+			siminput.fhRat=0;
 			goto saka;
 			
 		case '3':				// 登坂実験 Climbing experiment
 			printf("Climbing experiment\n"); // 登坂実験
 			restart ();
-			bipedinput.fwMax=30;
-			bipedinput.frRatA=0.0015;
-			bipedinput.frRatI=0.2;
-			bipedinput.fhRat=0;
+			siminput.fwMax=30;
+			siminput.frRatA=0.0015;
+			siminput.frRatI=0.2;
+			siminput.fhRat=0;
 			goto saka;
 
 		case '4':				// 段差実験 step experiment
 			printf("Step experiment\n"); // 段差実験
 			restart ();
-			bipedinput.fwMax=30;
-			bipedinput.frRatA=0.0015;
-			bipedinput.frRatI=0.2;
-			bipedinput.fhRat=7;
+			siminput.fwMax=30;
+			siminput.frRatA=0.0015;
+			siminput.frRatI=0.2;
+			siminput.fhRat=7;
 			setBody  (&platform_DAI2,		BODYTYPE_BOX,COLOR_GREEN,500,300,	 20,0,		0,	0,	-10,		 1,	100);	//水平台
 			setJoint(&platform_DAI2J,		JOINT_ENVFIXED,	&platform_DAI2,&platform_DAI2,	AXIS_X,	50,	0,	0);						//台固定用
 			break;
@@ -217,10 +217,10 @@ static void command (int cmd){
 		case '5':				// 最終実験 final experiment
 			printf("Final experiment\n"); // 最終実験
 			restart ();
-			bipedinput.fwMax=30;
-			bipedinput.frRatI=0.2;
-			bipedinput.frRatA=0.0015;
-			bipedinput.fhRat=7;
+			siminput.fwMax=30;
+			siminput.frRatI=0.2;
+			siminput.frRatA=0.0015;
+			siminput.fhRat=7;
 saka:	// slope/hill
 			setBody  (&platform_DAI,			BODYTYPE_BOX,COLOR_GREEN,680,300,	 100,   0,	 480,	0,   -70,	1,	100);		//傾斜台
 			dRFromAxisAndAngle(world_R, 0, 1, 0, -0.05);// 回転 rotate
@@ -238,11 +238,11 @@ saka:	// slope/hill
 			break;
 		case 'u':case 'U':		// UVC ON/OFF
 			printf("UVC ON/OFF\n");
-			if(bipedinput.uvcOff==0){
-				bipedinput.uvcOff=1;
+			if(siminput.uvcOff==0){
+				siminput.uvcOff=1;
 			}
 			else{
-				bipedinput.uvcOff=0;
+				siminput.uvcOff=0;
 			}
 			break;
 	}
@@ -303,6 +303,7 @@ static void control(){
 	}
 }
 
+
 //--------------------------------- simLoop ----------------------------------------
 //	simulation loop
 static void simLoop (int pause){
@@ -328,52 +329,52 @@ static void simLoop (int pause){
 
 		//******** 足裏圧力検出 Sole pressure detection ********
 		dJointFeedback* fb1 = dJointGetFeedback(biped.soleJ_r.jointId);
-		bipedstate.asiPress_r = fb1->f1[2];				// 右足(足首Ｚ)圧力 Right foot (ankle Z) pressure
+		simstate.asiPress_r = fb1->f1[2];				// 右足(足首Ｚ)圧力 Right foot (ankle Z) pressure
 		dJointFeedback* fb2 = dJointGetFeedback(biped.soleJ_l.jointId);
-		bipedstate.asiPress_l = fb2->f1[2];				// 左足(足首Ｚ)圧力 Left foot (ankle Z) pressure
+		simstate.asiPress_l = fb2->f1[2];				// 左足(足首Ｚ)圧力 Left foot (ankle Z) pressure
 
 		//******** 頭前後左右角度検出 Head front, back, left, right, and right angles ********
 		temp_Rot = dBodyGetRotation(biped.HEADT.bodyId);		// 回転行列取得 Get rotation matrix
-		bipedstate.fbRad = asin(temp_Rot[8]);					// 頭前後角度(後ろに仰向きが正) Anteroposterior angle of the head (positive when facing backwards)
-		bipedstate.lrRad = asin(temp_Rot[9]);					// 頭左右角度（右傾きが正） Head left/right angle (right tilt is positive)
+		simstate.fbRad = asin(temp_Rot[8]);					// 頭前後角度(後ろに仰向きが正) Anteroposterior angle of the head (positive when facing backwards)
+		simstate.lrRad = asin(temp_Rot[9]);					// 頭左右角度（右傾きが正） Head left/right angle (right tilt is positive)
 
 		//******** 頭前後左右角速度検出 Head front, rear, left and right angular velocity ********
 		temp_Rot = dBodyGetAngularVel(biped.HEADT.bodyId);	// 回転行列取得 Get rotation matrix
-		bipedstate.fbAV = temp_Rot[1];						// 頭前後角度(後ろに仰向きが負) Head anteroposterior angle (negative when facing backwards)
-		bipedstate.lrAV = temp_Rot[0];						// 頭左右角度（右傾きが正） Head left/right angle (right tilt is positive)
+		simstate.fbAV = temp_Rot[1];						// 頭前後角度(後ろに仰向きが負) Head anteroposterior angle (negative when facing backwards)
+		simstate.lrAV = temp_Rot[0];						// 頭左右角度（右傾きが正） Head left/right angle (right tilt is positive)
 
 #ifdef USING_MAIN
-		bipedstate.K0W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K0W[0]));
-		bipedstate.K0W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K0W[1]));
-		bipedstate.K1W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K1W[0]));
-		bipedstate.K1W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K1W[1]));
-		//bipedstate.K2W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K2W[0]));
-		bipedstate.HW[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.HW[0]));
-		bipedstate.HW[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.HW[1]));
-		bipedstate.A0W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A0W[0]));
-		bipedstate.A0W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A0W[1]));
-		bipedstate.A1W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A1W[0]));
-		bipedstate.A1W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A1W[1]));
+		simstate.K0W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K0W[0]));
+		simstate.K0W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K0W[1]));
+		simstate.K1W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K1W[0]));
+		simstate.K1W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K1W[1]));
+		//simstate.K2W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K2W[0]));
+		simstate.HW[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.HW[0]));
+		simstate.HW[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.HW[1]));
+		simstate.A0W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A0W[0]));
+		simstate.A0W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A0W[1]));
+		simstate.A1W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A1W[0]));
+		simstate.A1W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A1W[1]));
 #endif
 
-		biped.K0J_r.t_jointAngle	=bipedstate.K0W[0];			// 股関節前後方向書込用 For writing in hip joint anteroposterior direction
-		biped.K1J_r.t_jointAngle	=bipedstate.K1W[0];			// 股関節横方向書込用 For hip joint lateral writing
-		biped.HJ_r.t_jointAngle	=bipedstate.HW [0];			// 膝関節書込用 For writing knee joint
-		biped.A0J_r.t_jointAngle	=bipedstate.A0W[0];			// 足首上下方向書込用 For writing in ankle up and down direction
-		biped.A1J_r.t_jointAngle	=bipedstate.A1W[0];			// 足首横方向書込用 For ankle lateral writing
+		biped.K0J_r.t_jointAngle	=simstate.K0W[0];			// 股関節前後方向書込用 For writing in hip joint anteroposterior direction
+		biped.K1J_r.t_jointAngle	=simstate.K1W[0];			// 股関節横方向書込用 For hip joint lateral writing
+		biped.HJ_r.t_jointAngle	=simstate.HW [0];			// 膝関節書込用 For writing knee joint
+		biped.A0J_r.t_jointAngle	=simstate.A0W[0];			// 足首上下方向書込用 For writing in ankle up and down direction
+		biped.A1J_r.t_jointAngle	=simstate.A1W[0];			// 足首横方向書込用 For ankle lateral writing
 
-		biped.K0J_l.t_jointAngle	=bipedstate.K0W[1];			// 股関節前後方向書込用 For writing in hip joint anteroposterior direction
-		biped.K1J_l.t_jointAngle	=bipedstate.K1W[1];			// 股関節横方向書込用 For hip joint lateral writing
-		biped.HJ_l.t_jointAngle	=bipedstate.HW [1];			// 膝関節書込用  For writing knee joint
-		biped.A0J_l.t_jointAngle	=bipedstate.A0W[1];			// 足首上下方向書込用 For writing in ankle up and down direction
-		biped.A1J_l.t_jointAngle	=bipedstate.A1W[1];			// 足首横方向書込用 For ankle lateral writing
+		biped.K0J_l.t_jointAngle	=simstate.K0W[1];			// 股関節前後方向書込用 For writing in hip joint anteroposterior direction
+		biped.K1J_l.t_jointAngle	=simstate.K1W[1];			// 股関節横方向書込用 For hip joint lateral writing
+		biped.HJ_l.t_jointAngle	=simstate.HW [1];			// 膝関節書込用  For writing knee joint
+		biped.A0J_l.t_jointAngle	=simstate.A0W[1];			// 足首上下方向書込用 For writing in ankle up and down direction
+		biped.A1J_l.t_jointAngle	=simstate.A1W[1];			// 足首横方向書込用 For ankle lateral writing
 
 #ifdef USING_MAIN
 		// map input to maininput
 		// map core to maincore
 		g_main_initialI = main_step(&g_mainstate, &g_maincore, &g_maininput, g_main_initialI);
 #else
-		g_co.walk(&bipedstate, &bipedinput);				// 歩行制御 Walk control
+		g_co.walk(&simstate, &siminput);				// 歩行制御 Walk control
 #endif
 		control();				// モータ駆動 motor drive
 	}
@@ -388,7 +389,7 @@ static void simLoop (int pause){
 				dsSetColor (1,0,0);
 				break;
 			case COLOR_BODY:
-				if(bipedinput.uvcOff==0)	dsSetColor(0.3 ,0.3, 2.0);			// 青 green
+				if(siminput.uvcOff==0)	dsSetColor(0.3 ,0.3, 2.0);			// 青 green
 				else			dsSetColor(2.0, 0.3, 0.3);			// 赤 red
 				break;
 			case COLOR_YELLOW:
@@ -701,23 +702,23 @@ void restart (){
 	dWorldSetGravity (world, 0, 0, -9.8);	// 重力設定 Gravity settings
 	g_co.mode=0;
 	g_co.autoHs=180;
-	bipedinput.walkF=0;
-	bipedinput.uvcOff=0;
-	bipedinput.frRatI=0;
-	bipedinput.frRatA=0;
-	bipedinput.fhRat=0;
-	bipedinput.fwMax=0;
+	siminput.walkF=0;
+	siminput.uvcOff=0;
+	siminput.frRatI=0;
+	siminput.frRatA=0;
+	siminput.fhRat=0;
+	siminput.fwMax=0;
  
-	bipedstate.K0W[0]=0;			//股関節前後方向 hip joint anteroposterior direction
-	bipedstate.K1W[0]=0;			//股関節横方向 Hip joint lateral direction
-	bipedstate.HW [0]=0;			//膝関節 knee joint
-	bipedstate.A0W[0]=0;			//足首上下方向 Ankle up and down direction
-	bipedstate.A1W[0]=0;			//足首横方向 Ankle lateral direction
-	bipedstate.K0W[1]=0;			//股関節前後方向 hip joint anteroposterior direction
-	bipedstate.K1W[1]=0;			//股関節横方向 Hip joint lateral direction
-	bipedstate.HW [1]=0;			//膝関節 knee joint
-	bipedstate.A0W[1]=0;			//足首上下方向 Ankle up and down direction
-	bipedstate.A1W[1]=0;			//足首横方向 Ankle lateral direction
+	simstate.K0W[0]=0;			//股関節前後方向 hip joint anteroposterior direction
+	simstate.K1W[0]=0;			//股関節横方向 Hip joint lateral direction
+	simstate.HW [0]=0;			//膝関節 knee joint
+	simstate.A0W[0]=0;			//足首上下方向 Ankle up and down direction
+	simstate.A1W[0]=0;			//足首横方向 Ankle lateral direction
+	simstate.K0W[1]=0;			//股関節前後方向 hip joint anteroposterior direction
+	simstate.K1W[1]=0;			//股関節横方向 Hip joint lateral direction
+	simstate.HW [1]=0;			//膝関節 knee joint
+	simstate.A0W[1]=0;			//足首上下方向 Ankle up and down direction
+	simstate.A1W[1]=0;			//足首横方向 Ankle lateral direction
 }
 
 
@@ -731,7 +732,7 @@ static void start(){
 
 #ifdef USING_MAIN
 int sim_ics_set_pos(int port, unsigned char id, unsigned short pos) {
-	bipedstate_t* state = &bipedstate;
+	simstate_t* state = &simstate;
 	float	angle = DEGREES2RADIANS( SVANGLE2ANGLE(-pos + 7500) );
 	double*	dest = NULL;
 
@@ -805,8 +806,8 @@ int sim_bno55_read(unsigned char* command, size_t c_size, unsigned char* data, s
 		// core->yaw	= ((int16_t)input->ff[0]) | (((int16_t)input->ff[1]) << 8); // Standing upright and turning clockwise +
 		// core->pitchs = ((int16_t)input->ff[2]) | (((int16_t)input->ff[3]) << 8); // Standing upright and leaning forward -
 		// core->rolls = ((int16_t)input->ff[4]) | (((int16_t)input->ff[5]) << 8); // Upright with right tilt +
-		int16_t yaw = 0, pitch = RADIANS2DEGREES(bipedstate.fbRad) * 16.0,
-			roll = (RADIANS2DEGREES(bipedstate.lrRad) + 180.0f) * 16.0;
+		int16_t yaw = 0, pitch = RADIANS2DEGREES(simstate.fbRad) * 16.0,
+			roll = (RADIANS2DEGREES(simstate.lrRad) + 180.0f) * 16.0;
 		((int16_t*)data)[0] = 0;
 		((int16_t*)data)[1] = pitch;
 		((int16_t*)data)[2] = roll;
@@ -814,8 +815,8 @@ int sim_bno55_read(unsigned char* command, size_t c_size, unsigned char* data, s
 	}
 	else if (c_size == 1 && command[0] == 0X14 && r_size == 6) {
 		// return angular velocity in degrees*16.0
-		int16_t fbAV = RADIANS2DEGREES(bipedstate.fbAV) * 16.0f;
-		int16_t lrAV = RADIANS2DEGREES(bipedstate.lrAV) * 16.0f;
+		int16_t fbAV = RADIANS2DEGREES(simstate.fbAV) * 16.0f;
+		int16_t lrAV = RADIANS2DEGREES(simstate.lrAV) * 16.0f;
 		((int16_t*)data)[0] = 0;
 		((int16_t*)data)[1] = fbAV;
 		((int16_t*)data)[2] = lrAV;
@@ -833,8 +834,8 @@ int main (int argc, char **argv){
 	g_bno55_read = &sim_bno55_read;
 #endif
 
-	bipedstate_init(&bipedstate);
-	bipedinput_init(&bipedinput);
+	simstate_init(&simstate);
+	siminput_init(&siminput);
 	dMass m;
 	dInitODE(); // ODEの初期化 Initializing ODE
 

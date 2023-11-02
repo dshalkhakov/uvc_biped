@@ -32,8 +32,8 @@ class core{
 	float pitch;
 	float roll;
 
-	void footCont(bipedstate_t* state, float x,float y,float h,int s);
-	void walk(bipedstate_t* state, bipedinput_t* input);
+	void footCont(simstate_t* state, float x,float y,float h,int s);
+	void walk(simstate_t* state, siminput_t* input);
 	core(void);
 	~core(void);
 };
