@@ -593,6 +593,7 @@ case 730:
 	feetCont2(core, state, 1);
 
 	if(	fabs(core->roll)>0.033 || fabs(core->pitch)>0.044 ){
+		// DS: if we detect roll or pitch in initial posture, we should start walking to prevent fall
 		if(core->roll>0)	core->jikuasi=1;
 		else				core->jikuasi=0;
 		core->fwct=1;
@@ -1164,15 +1165,15 @@ int32_t main_init(state_t* state, core_t* core, input_t* input) {
 	i=ics_set_pos ( UART_SIO1, 5, 0 );	// K2R
 	state->K2W[0]=-i+7500;
 	i=ics_set_pos ( UART_SIO1, 6, 0 );	// K1R
-	state->K1W[0]=-i+7470;
+	state->K1W[0]=-i+7500; // was +7470
 	i=ics_set_pos ( UART_SIO1, 7, 0 );	// K0R
 	state->K0W[0]=-i+7500;
 	i=ics_set_pos ( UART_SIO1, 8, 0 );	// HR +1760
-	state->HW [0]=-i+9260;
+	state->HW [0]=-i+7500; // was +9260
 	i=ics_set_pos ( UART_SIO1, 9, 0 );	// A0R +350
-	state->A0W[0]=i-7910;
+	state->A0W[0]=i-7500; // was -7910
 	i=ics_set_pos ( UART_SIO1,10, 0 );	// A1R
-	state->A1W[0]=i-7585;
+	state->A1W[0]=i-7500; // was -7585
 	i=ics_set_pos ( UART_SIO3, 5, 0 );	// K2L
 	state->K2W[1]=i-7500;
 	i=ics_set_pos ( UART_SIO3, 6, 0 );	// K1L
@@ -1180,11 +1181,11 @@ int32_t main_init(state_t* state, core_t* core, input_t* input) {
 	i=ics_set_pos ( UART_SIO3, 7, 0 );	// K0L
 	state->K0W[1]=i-7500;
 	i=ics_set_pos ( UART_SIO3, 8, 0 );	// HL -1760
-	state->HW [1]=i-5740;
+	state->HW [1]=i-7500; // was -5740
 	i=ics_set_pos ( UART_SIO3, 9, 0 );	// A0L -350
-	state->A0W[1]=-i+7100;
+	state->A0W[1]=-i+7500; // was +7100
 	i=ics_set_pos ( UART_SIO3,10, 0 );	// A1L
-	state->A1W[1]=-i+7530;
+	state->A1W[1]=-i+7500; // was +7530
 	i=ics_set_pos ( UART_SIO4, 0, 0 );	// HEADL
 	state->HEADW=i-7500;
 	i=ics_set_pos ( UART_SIO2, 0, 0 );	// WESTR
@@ -1231,10 +1232,17 @@ void main_loop(state_t* state, core_t* core, input_t* input, int initialI) {
 	int32_t i = initialI;
 
 //----------------------------------------------------------------------------------
-	////////////////////////////////////////////////
-	//////////////////  MAIN LOOP  /////////////////
-	////////////////////////////////////////////////
+		////////////////////////////////////////////////
+		//////////////////  MAIN LOOP  /////////////////
+		////////////////////////////////////////////////
 top:
+	i = main_step(state, core, input, i);
+	goto top;
+}
+
+int32_t main_step(state_t* state, core_t* core, input_t* input, int initialI) {
+	int32_t i = initialI;
+
 	//////////////////////
 	//// 10ms待ち処理 10ms wait processing ////
 	//////////////////////
@@ -1396,7 +1404,7 @@ pio_write (PIO_T2, HIGH);	// OFF(wait時間確認) -- OFF (check wait time)
 
 
 	readLen(input, 0X14, 6);	// 角速度読込 ※rollとyawが取説と実際が逆 Angular velocity reading *Roll and yaw are opposite from the instruction manual.
-	core->roll_gyr 	= ((int16_t)input->ff[0]) | (((int16_t)input->ff[1]) << 8);	// 直立右傾斜で ＋ Standing upright and leaning to the right +
+	core->roll_gyr = ((int16_t)input->ff[0]) | (((int16_t)input->ff[1]) << 8);	// 直立右傾斜で ＋ Standing upright and leaning to the right +
 	core->pitch_gyr	= ((int16_t)input->ff[2]) | (((int16_t)input->ff[3]) << 8);	// 直立前傾で   － Stand upright and lean forward -
 	core->yaw_gyr	= ((int16_t)input->ff[4]) | (((int16_t)input->ff[5]) << 8);	// 直立右回転で ＋ Stand upright and turn clockwise +
 
@@ -1427,7 +1435,7 @@ pio_write (PIO_T2, HIGH);	// OFF(wait時間確認) -- OFF (check wait time)
 		pio_write (PIO_LED1, HIGH);	// OFF
 	}
 
-	goto top;
+	return i;
 }
 
 int controllerMain()

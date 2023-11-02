@@ -15,6 +15,9 @@
 #define ANGLE2SVANGLE(x)	((x) * SVANGLE_MULTIPLIER)
 #define SVANGLE2ANGLE(x)	((x) * SVANGLE_RECIPROCAL)
 
+#define DEGREES2RADIANS(deg)	((deg) * (M_PI/180.0f))
+#define RADIANS2DEGREES(rad)	((rad) * (180.0f/M_PI))
+
 // biped servo state. these variables seem to represent servo angles in 'normalized' form 
 typedef struct state_s {
 	int16_t K0W[2];			// 股関節前後方向書込用 hip pitch
@@ -114,5 +117,7 @@ extern void keyCont(input_t* input, core_t* core, state_t* state);
 extern int32_t main_init(state_t* state, core_t* core, input_t* input);
 extern void state_init(state_t* state);
 extern void core_init(core_t* core);
+
+extern int32_t main_step(state_t* state, core_t* core, input_t* input, int initialI);
 
 extern int controllerMain();

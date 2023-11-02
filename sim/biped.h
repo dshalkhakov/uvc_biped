@@ -66,7 +66,7 @@ public:
 	int		sv_servoId;		// サーボ識別 servo identification
 };
 
-typedef struct state_s {
+typedef struct bipedstate_s {
 	// 間接角度 indirect angle
 	double K0W[2];	// 股関節前後方向書込用 hip pitch
 	double K1W[2];	// 股関節横方向書込用 hip roll
@@ -85,20 +85,20 @@ typedef struct state_s {
 	double lrAV = 0;			// 頭左右角速度 Head left and right angular velocity
 	double asiPress_r = 0;	// 右足裏圧力 right foot pressure
 	double asiPress_l = 0;	// 左足裏圧力 left foot pressure
-} state_t;
+} bipedstate_t;
 
-extern state_t state;
+extern bipedstate_t bipedstate;
 
-typedef struct input_s {
+typedef struct bipedinput_s {
 	int		uvcOff = 0;		// UVC起動フラグ UVC activation flag
 	unsigned char walkF = 0;	// 歩行フラグ	（b0:歩行  b1:未  b2:未）walk flag (b0:walk b1:not yet b2:not yet)
 	double	frRatI;			// 上体角補正用積分係数 Integral coefficient for body angle correction
 	double	frRatA;			// 上体角オフセット値 Upper body angle offset value
 	double	fhRat;			// 足上げ高さ補正値 Foot lift height correction value
 	double	fwMax;			// 歩幅最大値 Maximum stride length
-} input_t;
+} bipedinput_t;
 
-extern input_t input;
+extern bipedinput_t bipedinput;
 
 typedef struct biped_s {
 	bodyStr solep_r;	// 足裏圧力センサ Sole pressure sensor
