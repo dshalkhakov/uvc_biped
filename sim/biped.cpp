@@ -26,6 +26,7 @@ extern "C" {
 #include "../src/main.h"
 #include "../src/sys_sim/sim_ics.h"
 #include "../src/sys_sim/sim_i2c.h"
+#include "../src/sys_sim/sim_uart.h"
 }
 
 state_t	g_mainstate;
@@ -135,6 +136,10 @@ core g_co;			// 歩行制御クラスの実体化 Instantiation of gait control 
 //--------------------------------- command ----------------------------------------
 static void command (int cmd){
 	static int mag = 30;
+
+#ifdef USING_MAIN
+	simuart_setLastKeyPressed(cmd);
+#endif
 
 	switch (cmd) {
 #ifdef USING_MAIN
