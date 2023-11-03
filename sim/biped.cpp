@@ -7,8 +7,6 @@ ODEによるUVC(上体垂直制御)の検証 Verification of UVC (upper body ver
 UVCの応用、登坂実験 2021 4/29 Application of UVC, hill climbing experiment 2021 4/29
 */
 
-#define USING_MAIN (1)
-
 #include < ode/ode.h >
 #include < drawstuff/drawstuff.h >
 #include < stdio.h >
@@ -21,18 +19,7 @@ UVCの応用、登坂実験 2021 4/29 Application of UVC, hill climbing experime
 #include  "core.h"
 
 #ifdef USING_MAIN
-extern "C" {
-#include <uart.h>
-#include "../src/main.h"
-#include "../src/sys_sim/sim_ics.h"
-#include "../src/sys_sim/sim_i2c.h"
-#include "../src/sys_sim/sim_uart.h"
-}
-
-state_t	g_mainstate;
-input_t	g_maininput;
-core_t	g_maincore;
-int16_t g_main_initialI;
+#include "main_integration.h"
 #endif // !USING_MAIN
 
 // 関数定義 Function definition
@@ -138,16 +125,10 @@ static void command (int cmd){
 	static int mag = 30;
 
 #ifdef USING_MAIN
-	simuart_setLastKeyPressed(cmd);
+	main_integration_command(cmd);
 #endif
 
 	switch (cmd) {
-#ifdef USING_MAIN
-		case 'g':case 'G':
-			printf("=============== main walk\n");
-			g_maincore.mode = 740; // switch to walking
-			break;
-#endif
 		//// 外力印加 External input ////
 		case 'j':case 'J':
 			printf("F<-\n"); // Ｆ←\n
@@ -349,17 +330,7 @@ static void simLoop (int pause){
 		simstate.lrAV = temp_Rot[0];						// 頭左右角度（右傾きが正） Head left/right angle (right tilt is positive)
 
 #ifdef USING_MAIN
-		simstate.K0W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K0W[0]));
-		simstate.K0W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K0W[1]));
-		simstate.K1W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K1W[0]));
-		simstate.K1W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K1W[1]));
-		//simstate.K2W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K2W[0]));
-		simstate.HW[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.HW[0]));
-		simstate.HW[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.HW[1]));
-		simstate.A0W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A0W[0]));
-		simstate.A0W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A0W[1]));
-		simstate.A1W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A1W[0]));
-		simstate.A1W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A1W[1]));
+		main_integration_feed_simstate(&simstate);
 #endif
 
 		biped.K0J_r.t_jointAngle	=simstate.K0W[0];			// 股関節前後方向書込用 For writing in hip joint anteroposterior direction
@@ -375,9 +346,7 @@ static void simLoop (int pause){
 		biped.A1J_l.t_jointAngle	=simstate.A1W[1];			// 足首横方向書込用 For ankle lateral writing
 
 #ifdef USING_MAIN
-		// map input to maininput
-		// map core to maincore
-		g_main_initialI = main_step(&g_mainstate, &g_maincore, &g_maininput, g_main_initialI);
+		main_integration_simLoop();
 #else
 		g_co.walk(&simstate, &siminput);				// 歩行制御 Walk control
 #endif
@@ -676,7 +645,7 @@ static void createBody (biped_t* biped){
 	dJointSetFeedback(biped->soleJ_l.jointId,			&feedback[1]);
 
 #ifdef USING_MAIN
-	g_main_initialI = main_init(&g_mainstate, &g_maincore, &g_maininput);
+	main_integration_restart();
 #endif
 }
 
@@ -735,108 +704,10 @@ static void start(){
 	dsSetViewpoint (xyz,hpr); // カメラの設定 Camera settings
 }
 
-#ifdef USING_MAIN
-int sim_ics_set_pos(int port, unsigned char id, unsigned short pos) {
-	simstate_t* state = &simstate;
-	float	angle = DEGREES2RADIANS( SVANGLE2ANGLE(-pos + 7500) );
-	double*	dest = NULL;
-
-	switch (port) {
-	case UART_SIO1:
-		switch (id) {
-		case 5:  /*dest = &state->K2W[0]; */ break;
-		case 6:  dest = &state->K1W[0]; break;
-		case 7:  dest = &state->K0W[0]; break;
-		case 8:  dest = &state->HW[0]; break;
-		case 9:  dest = &state->A0W[0]; break;
-		case 10: dest = &state->A1W[0]; break;
-		default: break;
-		}
-		break;
-
-	case UART_SIO2:
-		switch (id) {
-		case 1: dest = &state->U0W[0]; break;
-		case 2: dest = &state->U1W[0]; break;
-		case 3: dest = &state->U2W[0]; break;
-		case 4: /*dest = &state->EW[0];*/ break;
-		case 0: /*dest = &state->WESTW;*/ break;
-		default: break;
-		}
-		break;
-
-	case UART_SIO3:
-		switch (id) {
-		case 5:  /*dest = &state->K2W[1];*/ break;
-		case 6:  dest = &state->K1W[1]; break;
-		case 7:  dest = &state->K0W[1]; break;
-		case 8:  dest = &state->HW[1]; break;
-		case 9:  dest = &state->A0W[1]; break;
-		case 10: dest = &state->A1W[1]; break;
-		default: break;
-		}
-		break;
-
-	case UART_SIO4:
-		switch (id) {
-		case 1: dest = &state->U0W[1]; break;
-		case 2: dest = &state->U1W[1]; break;
-		case 3: dest = &state->U2W[1]; break;
-		//case 4: dest = &state->EW[1]; break;
-		//case 0: dest = &state->HEADW; break;
-		default: break;
-		}
-		break;
-
-	default:
-		break;
-	}
-
-	if (dest != NULL) {
-		if (pos == 0) {
-			return -ANGLE2SVANGLE(RADIANS2DEGREES(*dest)) + 7500;
-		}
-		else {
-			*dest = (double)angle;
-			return pos;
-		}
-	}
-
-	return pos;
-}
-
-int sim_bno55_read(unsigned char* command, size_t c_size, unsigned char* data, size_t r_size) {
-	if (c_size == 1 && command[0] == 0X1A && r_size == 6) {
-		// return gyroscope data in degrees*16.0
-		// core->yaw	= ((int16_t)input->ff[0]) | (((int16_t)input->ff[1]) << 8); // Standing upright and turning clockwise +
-		// core->pitchs = ((int16_t)input->ff[2]) | (((int16_t)input->ff[3]) << 8); // Standing upright and leaning forward -
-		// core->rolls = ((int16_t)input->ff[4]) | (((int16_t)input->ff[5]) << 8); // Upright with right tilt +
-		int16_t yaw = 0, pitch = RADIANS2DEGREES(simstate.fbRad) * 16.0,
-			roll = (RADIANS2DEGREES(simstate.lrRad) + 180.0f) * 16.0;
-		((int16_t*)data)[0] = 0;
-		((int16_t*)data)[1] = pitch;
-		((int16_t*)data)[2] = roll;
-		return 1;
-	}
-	else if (c_size == 1 && command[0] == 0X14 && r_size == 6) {
-		// return angular velocity in degrees*16.0
-		int16_t fbAV = RADIANS2DEGREES(simstate.fbAV) * 16.0f;
-		int16_t lrAV = RADIANS2DEGREES(simstate.lrAV) * 16.0f;
-		((int16_t*)data)[0] = 0;
-		((int16_t*)data)[1] = fbAV;
-		((int16_t*)data)[2] = lrAV;
-		return 1;
-	}
-
-	return 1;
-}
-#endif // !USING_MAIN
-
 //------------------------------------ main -------------------------------------
 int main (int argc, char **argv){
 #ifdef USING_MAIN
-	g_ics_set_pos_callback = &sim_ics_set_pos;
-	g_bno55_read = &sim_bno55_read;
+	main_integration_init();
 #endif
 
 	simstate_init(&simstate);
