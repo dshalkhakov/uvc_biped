@@ -62,6 +62,9 @@ void simstate_init(simstate_t* state) {
 	state->U1W[1] = 0;
 	state->U2W[0] = 0;	// 肩ヨー向書込用 For writing in shoulder yaw direction
 	state->U2W[1] = 0;
+#ifdef USING_MAIN
+	state->WESTW = 0;
+#endif
 
 	// センサ関連 Sensor related
 	state->fbRad = 0;			// 頭前後角度 head front and back angle
@@ -331,6 +334,7 @@ static void simLoop (int pause){
 
 #ifdef USING_MAIN
 		main_integration_feed_simstate(&simstate);
+		biped.WESTJ.t_jointAngle = simstate.WESTW;
 #endif
 
 		biped.K0J_r.t_jointAngle	=simstate.K0W[0];			// 股関節前後方向書込用 For writing in hip joint anteroposterior direction
@@ -512,6 +516,7 @@ static void setJoint (jointStr *j, jointType_t k, bodyStr *b1, bodyStr *b2, axis
 	j -> tm2	= 8.06;		// 8.06最大角速度 -- //8.06 maximum angular velocity
 	j -> torque_tk	= 2.45;		// 2.45トルク 25kgfcm   (25/100)/9.8=2.45 -- 2.45 torque 25kgfcm (25/100)/9.8=2.45
 	j -> torque_tk2	= 2.45;		// トルク2 torque 2
+	j -> enabled = 1;
 
 	x += 2;					// 2m手前に置いて地面障害物を避ける Place 2m in front to avoid ground obstacles
 	world_addJoint(&g_world, j);
@@ -574,7 +579,13 @@ static void createBody (biped_t* biped){
 //                         Type Color   L   W   H   R       X   Y   Z  Geometry Weight
 
 	setBody  (&biped->HEADT,		BODYTYPE_CAPSULE, COLOR_WHITE,	15,	0,	0,	21,		0,	0,	340,	0,	0.16);	// 頭 head
+#ifdef USING_MAIN
+	// torso + pelvis
+	setBody  (&biped->DOU,		BODYTYPE_BOX,COLOR_BODY,	40, 84, 100,0,		0,	0,	260,	1,	1.0);	// 胴 torso
+	setBody  (&biped->PELVIS,	BODYTYPE_BOX,COLOR_GREEN,	40, 84, 20,0,		0,	0,	200,	1,	0.24);
+#else
 	setBody  (&biped->DOU,		BODYTYPE_BOX,COLOR_BODY,	40, 84, 130,0,		0,	0,	260,	1,	1.24);	// 胴 torso
+#endif
 	setBody  (&biped->K0_r,		BODYTYPE_CYLINDER,COLOR_GREY,	34,	0,	0,	12,		0,	-fw,195,	0,	0.05);	// 股関節ピッチ hip pitch
 	dRFromAxisAndAngle(world_R, 1, 0, 0, -M_PI_2);// 回転 rotate
 	dBodySetRotation(biped->K0_r.bodyId, world_R);
@@ -624,8 +635,16 @@ static void createBody (biped_t* biped){
 	setJoint(&biped->HEADJ,		JOINT_FIXED,	&biped->HEADT,	&biped->DOU,	AXIS_Z,		0,		0,		360);	// 頭固定用 For head fixation
 	setJoint(&biped->K0J_r,		JOINT_HINGE,	&biped->K1_r,	&biped->K0_r,	AXIS_Y,		0,		-fw,	195);	// 股関節ピッチ hip joint pitch
 	setJoint(&biped->K0J_l,		JOINT_HINGE,	&biped->K1_l,	&biped->K0_l,	AXIS_Y,		0,		fw,		195);
+#ifdef USING_MAIN
+	// K1 connects to PELVIS, PELVIS connects to DOU
+	setJoint(&biped->K1J_r,		JOINT_HINGE,	&biped->PELVIS,	&biped->K1_r,	AXIS_X,		0,		-fw+11,	195);	// 股関節ロール hip roll
+	setJoint(&biped->K1J_l,		JOINT_HINGE,	&biped->K1_l,	&biped->PELVIS,	AXIS_X,		0,		fw-11,	195);
+	setJoint(&biped->WESTJ,		JOINT_HINGE,	&biped->PELVIS,	&biped->DOU,	AXIS_Z,		0,		0,		210);
+#else
+	// K1 connects to DOU
 	setJoint(&biped->K1J_r,		JOINT_HINGE,	&biped->DOU,	&biped->K1_r,	AXIS_X,		0,		-fw+11,	195);	// 股関節ロール hip roll
 	setJoint(&biped->K1J_l,		JOINT_HINGE,	&biped->K1_l,	&biped->DOU,	AXIS_X,		0,		fw-11,	195);
+#endif
 	setJoint(&biped->MJ_r,		JOINT_FIXED,	&biped->M_r,	&biped->K0_r,	AXIS_Y,		0,		-fw,	128);	// 腿固定用 for leg fixation
 	setJoint(&biped->MJ_l,		JOINT_FIXED,	&biped->M_l,	&biped->K0_l,	AXIS_Y,		0,		fw,		128);
 	setJoint(&biped->M2J_r,		JOINT_FIXED,	&biped->H_r,	&biped->M_r,	AXIS_Y,		0,		-fw,	128);	// 腿固定用 for leg fixation
@@ -693,6 +712,9 @@ void restart (){
 	simstate.HW [1]=0;			//膝関節 knee joint
 	simstate.A0W[1]=0;			//足首上下方向 Ankle up and down direction
 	simstate.A1W[1]=0;			//足首横方向 Ankle lateral direction
+#ifdef USING_MAIN
+	simstate.WESTW = 0;
+#endif
 }
 
 

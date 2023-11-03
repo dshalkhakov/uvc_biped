@@ -30,6 +30,7 @@ void main_integration_feed_simstate(simstate_t* simstate) {
 	simstate->A0W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A0W[1]));
 	simstate->A1W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A1W[0]));
 	simstate->A1W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A1W[1]));
+	simstate->WESTW = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.WESTW));
 }
 
 void main_integration_command(int cmd) {
@@ -39,6 +40,9 @@ void main_integration_command(int cmd) {
 	case 'g':case 'G':
 		printf("=============== main walk\n");
 		g_maincore.mode = 740; // switch to walking
+		// g_maincore.dxi += 3; // turns left
+		// g_maincore.dxi -= 3; // should turn right? but actually turns left
+		// dyi = 10 -> biped spreads legs to sides to increase support area
 		break;
 	default:
 		break;
@@ -79,7 +83,7 @@ int sim_ics_set_pos(int port, unsigned char id, unsigned short pos) {
 		case 2: dest = &state->U1W[0]; break;
 		case 3: dest = &state->U2W[0]; break;
 		case 4: /*dest = &state->EW[0];*/ break;
-		case 0: /*dest = &state->WESTW;*/ break;
+		case 0: dest = &state->WESTW; break;
 		default: break;
 		}
 		break;

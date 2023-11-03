@@ -77,6 +77,9 @@ typedef struct simstate_s {
 	double U0W[2];	// 肩前後方向書込用 shoulder pitch
 	double U1W[2];	// 肩横後方向書込用 shoulder roll
 	double U2W[2];	// 肩ヨー向書込用 shoulder yaw
+#ifdef USING_MAIN
+	double WESTW;
+#endif
 
 	// センサ関連 Sensor related
 	double fbRad = 0;			// 頭前後角度 head front and back angle
@@ -121,6 +124,9 @@ typedef struct biped_s {
 	bodyStr K1_l;
 	bodyStr DOU;		// 胴 torso
 	bodyStr HEADT;	// 頭 head
+#ifdef USING_MAIN
+	bodyStr PELVIS;
+#endif
 
 	jointStr soleJ_r;	// 足裏センサ sole sensor
 	jointStr soleJ_l;
@@ -143,6 +149,9 @@ typedef struct biped_s {
 	jointStr K2J_r;		// 股関節ヨー Hip joint yaw
 	jointStr K2J_l;
 	jointStr HEADJ;		// 頭固定 Head fixation
+#ifdef USING_MAIN
+	jointStr WESTJ;
+#endif
 } biped_t;
 
 typedef struct world_s {
