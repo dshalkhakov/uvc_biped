@@ -605,15 +605,13 @@ static void createBody (biped_t* biped){
 	dRFromAxisAndAngle(world_R, 0, 1, 0, -M_PI_2);// 回転 rotate
 	dBodySetRotation(biped->K1_l.bodyId, world_R);
 #ifdef USING_MAIN
-	// K2 l r: disabled
-/*
-	setBody(&biped->K2_r, BODYTYPE_CYLINDER, COLOR_RED, 34, 0, 0, 12, 0, -fw, 205, 0, 0.05);	// hip yaw
+	// K2 l r
+	setBody  (&biped->K2_r, BODYTYPE_CYLINDER, COLOR_RED, 34, 0, 0, 12, 0, -fw, 205, 0, 0.005);	// hip yaw
 	dRFromAxisAndAngle(world_R, 0, 0, 1, -M_PI_2);// 回転 rotate
 	dBodySetRotation(biped->K2_r.bodyId, world_R);
-	setBody  (&biped->K2_l,		BODYTYPE_CYLINDER,COLOR_GREY,	34,	0,	0,	12,		0,	fw,	205,	0,	0.05);
+	setBody  (&biped->K2_l,		BODYTYPE_CYLINDER,COLOR_RED,	34,	0,	0,	12,		0,	fw,	205,	0,	0.05);
 	dRFromAxisAndAngle(world_R, 0, 0, 1, -M_PI_2);// 回転 rotate
 	dBodySetRotation(biped->K2_l.bodyId, world_R);
-	*/
 #endif
 	setBody  (&biped->M_r,			BODYTYPE_BOX, COLOR_GREY,	20,	26,	90,	0,		0,	-fw,150,	0,	0.08);	// 腿 leg
 	setBody  (&biped->M_l,			BODYTYPE_BOX, COLOR_GREY,	20,	26,	90, 0,		0,	fw,	150,	0,	0.08);
@@ -657,20 +655,20 @@ static void createBody (biped_t* biped){
 	setJoint(&biped->K0J_r,		JOINT_HINGE,	&biped->K1_r,	&biped->K0_r,	AXIS_Y,		0,		-fw,	195);	// 股関節ピッチ hip joint pitch
 	setJoint(&biped->K0J_l,		JOINT_HINGE,	&biped->K1_l,	&biped->K0_l,	AXIS_Y,		0,		fw,		195);
 #ifdef USING_MAIN
-/*
+#if 1
 	// K1 connects to K2, K2 to PELVIS, PELVIS to DOU
-	// unfortunately, if we add K2, then walking becomes unstable
 	setJoint(&biped->K1J_r,		JOINT_HINGE,	&biped->K2_r,	&biped->K1_r,		AXIS_X,		0,		-fw+11,	195);	// 股関節ロール hip roll
-	setJoint(&biped->K1J_l,		JOINT_HINGE,	&biped->K2_l,	&biped->K1_l,		AXIS_X,		0,		fw-11,	195);
-	setJoint(&biped->K2J_r,		JOINT_HINGE,	&biped->PELVIS,&biped->K2_r,	AXIS_Z,		0,		-fw+11,	200);	// 股関節ロール hip yaw
-	setJoint(&biped->K2J_l,		JOINT_HINGE,	&biped->K2_l,	&biped->PELVIS,	AXIS_Z,		0,		fw-11,	200);
+	setJoint(&biped->K1J_l,		JOINT_HINGE,	&biped->K1_l,	&biped->K2_l,		AXIS_X,		0,		fw-11,	195);
+	setJoint(&biped->K2J_r,		JOINT_HINGE,	&biped->K2_r,&biped->PELVIS,	AXIS_Z,		0,		-fw,	200);	// 股関節ロール hip yaw
+	setJoint(&biped->K2J_l,		JOINT_HINGE,	&biped->PELVIS,	&biped->K2_l,	AXIS_Z,		0,		fw,	200);
 
 	setJoint(&biped->WESTJ,		JOINT_HINGE,	&biped->PELVIS,	&biped->DOU,	AXIS_Z,		0,		0,		210);
-*/
+#else // if 1
 	// K1 connects to PELVIS, PELVIS connects to DOU
 	setJoint(&biped->K1J_r,		JOINT_HINGE,	&biped->PELVIS,	&biped->K1_r,	AXIS_X,		0,		-fw+11,	195);	// 股関節ロール hip roll
 	setJoint(&biped->K1J_l,		JOINT_HINGE,	&biped->K1_l,	&biped->PELVIS,	AXIS_X,		0,		fw-11,	195);
 	setJoint(&biped->WESTJ,		JOINT_HINGE,	&biped->PELVIS,	&biped->DOU,	AXIS_Z,		0,		0,		210);
+#endif // !if 1
 #else
 	// K1 connects to DOU
 	setJoint(&biped->K1J_r,		JOINT_HINGE,	&biped->DOU,	&biped->K1_r,	AXIS_X,		0,		-fw+11,	195);	// 股関節ロール hip roll
