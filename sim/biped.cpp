@@ -49,7 +49,8 @@ void simstate_init(simstate_t* state) {
 	state->K0W[1] = 0;
 	state->K1W[0] = 0;	// 股関節横方向書込用 For hip joint lateral writing
 	state->K1W[1] = 0;
-	// double state->K2W={0,0};	// 股関節横方向書込用 For hip joint lateral writing
+	state->K2W[0] = 0;	// 股関節横方向書込用 For hip joint lateral writing
+	state->K2W[1] = 0;
 	state->HW[0] = 0;	// 膝関節書込用 For knee joint writing
 	state->HW[1] = 0;
 	state->A0W[0] = 0;	// 足首上下方向書込用 For writing in the upper and lower direction of the ankle
@@ -335,6 +336,9 @@ static void simLoop (int pause){
 #ifdef USING_MAIN
 		main_integration_feed_simstate(&simstate);
 		biped.WESTJ.t_jointAngle = simstate.WESTW;
+		biped.K2J_r.t_jointAngle = simstate.K2W[0];
+		biped.K2J_l.t_jointAngle = simstate.K2W[1];
+		biped.HEADJ.t_jointAngle = simstate.HEADW;
 #endif
 
 		biped.K0J_r.t_jointAngle	=simstate.K0W[0];			// 股関節前後方向書込用 For writing in hip joint anteroposterior direction
@@ -580,9 +584,11 @@ static void createBody (biped_t* biped){
 
 	setBody  (&biped->HEADT,		BODYTYPE_CAPSULE, COLOR_WHITE,	15,	0,	0,	21,		0,	0,	340,	0,	0.16);	// 頭 head
 #ifdef USING_MAIN
+	dRFromAxisAndAngle(world_R, 0, 0, 1, -M_PI_2);// 回転 rotate
+	dBodySetRotation(biped->HEADT.bodyId, world_R);
 	// torso + pelvis
-	setBody  (&biped->DOU,		BODYTYPE_BOX,COLOR_BODY,	40, 84, 100,0,		0,	0,	260,	1,	1.0);	// 胴 torso
-	setBody  (&biped->PELVIS,	BODYTYPE_BOX,COLOR_GREEN,	40, 84, 20,0,		0,	0,	200,	1,	0.24);
+	setBody  (&biped->DOU,		BODYTYPE_BOX,COLOR_BODY,	40, 84, 90,0,		0,	0,	275,	1,	1.0);	// 胴 torso
+	setBody  (&biped->PELVIS,	BODYTYPE_BOX,COLOR_GREEN,	40, 84, 15,0,		0,	0,	220,	1,	0.24);
 #else
 	setBody  (&biped->DOU,		BODYTYPE_BOX,COLOR_BODY,	40, 84, 130,0,		0,	0,	260,	1,	1.24);	// 胴 torso
 #endif
@@ -598,6 +604,17 @@ static void createBody (biped_t* biped){
 	setBody  (&biped->K1_l,		BODYTYPE_CYLINDER,COLOR_WHITE,	34,	0,	0,	12,		0,	fw,	195,	0,	0.05);
 	dRFromAxisAndAngle(world_R, 0, 1, 0, -M_PI_2);// 回転 rotate
 	dBodySetRotation(biped->K1_l.bodyId, world_R);
+#ifdef USING_MAIN
+	// K2 l r: disabled
+/*
+	setBody(&biped->K2_r, BODYTYPE_CYLINDER, COLOR_RED, 34, 0, 0, 12, 0, -fw, 205, 0, 0.05);	// hip yaw
+	dRFromAxisAndAngle(world_R, 0, 0, 1, -M_PI_2);// 回転 rotate
+	dBodySetRotation(biped->K2_r.bodyId, world_R);
+	setBody  (&biped->K2_l,		BODYTYPE_CYLINDER,COLOR_GREY,	34,	0,	0,	12,		0,	fw,	205,	0,	0.05);
+	dRFromAxisAndAngle(world_R, 0, 0, 1, -M_PI_2);// 回転 rotate
+	dBodySetRotation(biped->K2_l.bodyId, world_R);
+	*/
+#endif
 	setBody  (&biped->M_r,			BODYTYPE_BOX, COLOR_GREY,	20,	26,	90,	0,		0,	-fw,150,	0,	0.08);	// 腿 leg
 	setBody  (&biped->M_l,			BODYTYPE_BOX, COLOR_GREY,	20,	26,	90, 0,		0,	fw,	150,	0,	0.08);
 	setBody  (&biped->H_r,			BODYTYPE_CYLINDER, COLOR_GREY,	34,	0,	0,  12,		0,	-fw,105,	0,	0.03);	// 膝 knees
@@ -632,10 +649,24 @@ static void createBody (biped_t* biped){
 //								種類				B番号1			B番号2			軸			X		Y		Z
 //						        Type			B number 1		B number 2		Axis        X       Y       Z
 
+#ifdef USING_MAIN
+	setJoint(&biped->HEADJ,		JOINT_HINGE,	&biped->HEADT,	&biped->DOU,	AXIS_Z,		0,		0,		360);	// 頭固定用 For head fixation
+#else
 	setJoint(&biped->HEADJ,		JOINT_FIXED,	&biped->HEADT,	&biped->DOU,	AXIS_Z,		0,		0,		360);	// 頭固定用 For head fixation
+#endif
 	setJoint(&biped->K0J_r,		JOINT_HINGE,	&biped->K1_r,	&biped->K0_r,	AXIS_Y,		0,		-fw,	195);	// 股関節ピッチ hip joint pitch
 	setJoint(&biped->K0J_l,		JOINT_HINGE,	&biped->K1_l,	&biped->K0_l,	AXIS_Y,		0,		fw,		195);
 #ifdef USING_MAIN
+/*
+	// K1 connects to K2, K2 to PELVIS, PELVIS to DOU
+	// unfortunately, if we add K2, then walking becomes unstable
+	setJoint(&biped->K1J_r,		JOINT_HINGE,	&biped->K2_r,	&biped->K1_r,		AXIS_X,		0,		-fw+11,	195);	// 股関節ロール hip roll
+	setJoint(&biped->K1J_l,		JOINT_HINGE,	&biped->K2_l,	&biped->K1_l,		AXIS_X,		0,		fw-11,	195);
+	setJoint(&biped->K2J_r,		JOINT_HINGE,	&biped->PELVIS,&biped->K2_r,	AXIS_Z,		0,		-fw+11,	200);	// 股関節ロール hip yaw
+	setJoint(&biped->K2J_l,		JOINT_HINGE,	&biped->K2_l,	&biped->PELVIS,	AXIS_Z,		0,		fw-11,	200);
+
+	setJoint(&biped->WESTJ,		JOINT_HINGE,	&biped->PELVIS,	&biped->DOU,	AXIS_Z,		0,		0,		210);
+*/
 	// K1 connects to PELVIS, PELVIS connects to DOU
 	setJoint(&biped->K1J_r,		JOINT_HINGE,	&biped->PELVIS,	&biped->K1_r,	AXIS_X,		0,		-fw+11,	195);	// 股関節ロール hip roll
 	setJoint(&biped->K1J_l,		JOINT_HINGE,	&biped->K1_l,	&biped->PELVIS,	AXIS_X,		0,		fw-11,	195);

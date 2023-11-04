@@ -23,7 +23,8 @@ void main_integration_feed_simstate(simstate_t* simstate) {
 	simstate->K0W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K0W[1]));
 	simstate->K1W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K1W[0]));
 	simstate->K1W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K1W[1]));
-	//simstate->K2W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K2W[0]));
+	simstate->K2W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K2W[0]));
+	simstate->K2W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.K2W[1]));
 	simstate->HW[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.HW[0]));
 	simstate->HW[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.HW[1]));
 	simstate->A0W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A0W[0]));
@@ -31,6 +32,7 @@ void main_integration_feed_simstate(simstate_t* simstate) {
 	simstate->A1W[0] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A1W[0]));
 	simstate->A1W[1] = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.A1W[1]));
 	simstate->WESTW = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.WESTW));
+	simstate->HEADW = DEGREES2RADIANS(SVANGLE2ANGLE(g_mainstate.HEADW));
 }
 
 void main_integration_command(int cmd) {
@@ -67,7 +69,7 @@ int sim_ics_set_pos(int port, unsigned char id, unsigned short pos) {
 	switch (port) {
 	case UART_SIO1:
 		switch (id) {
-		case 5:  /*dest = &state->K2W[0]; */ break;
+		case 5:  dest = &state->K2W[0]; break;
 		case 6:  dest = &state->K1W[0]; break;
 		case 7:  dest = &state->K0W[0]; break;
 		case 8:  dest = &state->HW[0]; break;
@@ -90,7 +92,7 @@ int sim_ics_set_pos(int port, unsigned char id, unsigned short pos) {
 
 	case UART_SIO3:
 		switch (id) {
-		case 5:  /*dest = &state->K2W[1];*/ break;
+		case 5:  dest = &state->K2W[1]; break;
 		case 6:  dest = &state->K1W[1]; break;
 		case 7:  dest = &state->K0W[1]; break;
 		case 8:  dest = &state->HW[1]; break;
@@ -106,7 +108,7 @@ int sim_ics_set_pos(int port, unsigned char id, unsigned short pos) {
 		case 2: dest = &state->U1W[1]; break;
 		case 3: dest = &state->U2W[1]; break;
 			//case 4: dest = &state->EW[1]; break;
-			//case 0: dest = &state->HEADW; break;
+		case 0: dest = &state->HEADW; break;
 		default: break;
 		}
 		break;

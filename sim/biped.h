@@ -70,7 +70,7 @@ typedef struct simstate_s {
 	// 間接角度 indirect angle
 	double K0W[2];	// 股関節前後方向書込用 hip pitch
 	double K1W[2];	// 股関節横方向書込用 hip roll
-	// double K2W[2];	// 股関節横方向書込用 hip yaw
+	double K2W[2];	// 股関節横方向書込用 hip yaw
 	double HW[2];	// 膝関節書込用 For knee joint writing
 	double A0W[2];	// 足首上下方向書込用 ankle pitch
 	double A1W[2];	// 足首横方向書込用 ankle roll
@@ -79,6 +79,7 @@ typedef struct simstate_s {
 	double U2W[2];	// 肩ヨー向書込用 shoulder yaw
 #ifdef USING_MAIN
 	double WESTW;
+	double HEADW;
 #endif
 
 	// センサ関連 Sensor related
@@ -125,6 +126,8 @@ typedef struct biped_s {
 	bodyStr DOU;		// 胴 torso
 	bodyStr HEADT;	// 頭 head
 #ifdef USING_MAIN
+	bodyStr K2_l;		// l hip yaw
+	bodyStr K2_r;		// r hip yaw
 	bodyStr PELVIS;
 #endif
 
