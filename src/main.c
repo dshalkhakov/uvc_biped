@@ -403,25 +403,25 @@ void footCont(core_t* core, state_t* state, vec2_t p0,float h,int s){
 	}
 
 	float x = CHG_SVA*asin(p0[0]/k);						// K0脚振り角度 K0 leg swing angle
-	k = CHG_SVA*acos(k/130);					// 膝曲げ角度 knee bending angle
-	if(k>1800)k=1800;							// 60°Max
+	float k0 = CHG_SVA*acos(k/130);					// 膝曲げ角度 knee bending angle
+	if(k0>1800)k0=1800;							// 60°Max
 
-	if		(2*k-state->HW[s]> 100) k=(state->HW[s]+100)/2;	// 回転速度最大 0.13s/60deg = 138count -- Maximum rotation speed
-	else if	(2*k-state->HW[s]<-100) k=(state->HW[s]-100)/2;
-//	if(core->mode!=0 && core->jikuasi==s)state->HW[s]	= k*1.98;	// 軸足のたわみを考慮 Consider the deflection of the pivot foot
-	if(core->mode!=0 && core->jikuasi==s)state->HW[s]	= k*2;
-	else							 state->HW[s]	= k*2;
-	state->K0W[s]	= k+x;
-	state->A0W[s]	= k-x;
+	if		(2*k0-state->HW[s]> 100) k0=(state->HW[s]+100)/2;	// 回転速度最大 0.13s/60deg = 138count -- Maximum rotation speed
+	else if	(2*k0-state->HW[s]<-100) k0=(state->HW[s]-100)/2;
+//	if(core->mode!=0 && core->jikuasi==s)state->HW[s]	= k0*1.98;	// 軸足のたわみを考慮 Consider the deflection of the pivot foot
+	if(core->mode!=0 && core->jikuasi==s)state->HW[s]	= k0*2;
+	else							 state->HW[s]	= k0*2;
+	state->K0W[s]	= k0+x;
+	state->A0W[s]	= k0-x;
 
-	k = CHG_SVA*atan(p0[1]/h);						// K1角度 K1 angle
+	float k1 = CHG_SVA*atan(p0[1]/h);						// K1角度 K1 angle
 
-	if		(k-state->K1W[s]> 100) k=state->K1W[s]+100;		// 回転速度最大 0.13s/60deg = 138count -- Maximum rotation speed
-	else if	(k-state->K1W[s]<-100) k=state->K1W[s]-100;
+	if		(k1-state->K1W[s]> 100) k1=state->K1W[s]+100;		// 回転速度最大 0.13s/60deg = 138count -- Maximum rotation speed
+	else if	(k1-state->K1W[s]<-100) k1=state->K1W[s]-100;
 
-	if(core->mode!=0 && core->jikuasi==s)state->K1W[s] = k;		// 軸足のたわみを考慮 Consider the deflection of the pivot foot
-	else					          state->K1W[s] = k;
-	state->A1W[s] = -k;
+	if(core->mode!=0 && core->jikuasi==s)state->K1W[s] = k1;		// 軸足のたわみを考慮 Consider the deflection of the pivot foot
+	else					          state->K1W[s] = k1;
+	state->A1W[s] = -k1;
 }
 
 
@@ -638,7 +638,7 @@ case 750:
 	if(	core->fwct>30 ){
 		core->fwct=1;
 
-		k=sqrt(0.5* core->dxis*core->dxis+core->dyis*core->dyis);	// 移動量、前後方向は減少させる Reduce the amount of movement and the forward and backward directions
+		k=sqrt(0.5* Vec2LengthSquared(core->dxis, core->dyis));	// 移動量、前後方向は減少させる Reduce the amount of movement and the forward and backward directions
 		core->swMax=17+17*k/45;
 
 		core->mode=760;		// 状態遷移 state transition

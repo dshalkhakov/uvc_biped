@@ -1,6 +1,7 @@
 ﻿typedef float vec2_t[2];
 
 #define Vec2Length(x,y)		(sqrt((x)*(x) + (y)*(y)))
+#define Vec2LengthSquared(x,y)	( (x)*(x) + (y)*(y) )
 
 // svangle_t is radians * SVANGLE_MULTIPLIER. range is -4000..4000, representing max 
 // servo rotation of 270 degrees, midpoint is zero.
@@ -120,8 +121,8 @@ extern void uvc(core_t* core);
 extern void footUp(core_t* core);
 extern void swCont(core_t* core);
 extern void armCont(core_t* core, state_t* state);
-extern void footCont(core_t* core, state_t* state, float x, float y, float h, int s);
-extern void feetCont1(core_t* core, state_t* state, float x0, float y0, float x1, float y1, int s);
+extern void footCont(core_t* core, state_t* state, vec2_t p0, float h, int s);
+extern void feetCont1(core_t* core, state_t* state, vec2_t p0, vec2_t p1, int s);
 extern void feetCont2(core_t* core, state_t* state, int s);
 extern void counterCont(core_t* core);
 extern void walk(core_t* core, state_t* state);
