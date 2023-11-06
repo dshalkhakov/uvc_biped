@@ -43,7 +43,7 @@ core::~core(void){}
 // *****************
 // **  脚位置制御 leg position control  **
 // *****************
-void core::footCont(state_t* state, float x,float y,float h,int s){
+void core::footCont(simstate_t* state, float x,float y,float h,int s){
 //x:中点を0とする足前後方向距離（前+）Distance in the front and rear direction of the foot with the midpoint as 0 (front +)
 //y:中点を0とする足左右方向距離（右+）Distance in the left and right direction of the foot with the midpoint as 0 (right +)
 //h:足首ロール軸から股関節ロール軸までの距離 Distance from ankle roll axis to hip roll axis
@@ -72,7 +72,7 @@ void core::footCont(state_t* state, float x,float y,float h,int s){
 // *********************
 // **  歩行制御メイン Walking control main  **
 // *********************
-void core::walk(state_t* state, input_t* input){
+void core::walk(simstate_t* state, siminput_t* input){
 	switch(mode){
 
 	////////////////////////

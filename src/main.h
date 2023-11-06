@@ -1,21 +1,34 @@
-﻿// representation of angles used by servos
-#define HWANGLE_180	(2880)
+﻿// representation of angles used by BNO55
+#define HWANGLE_180			(2880)
 #define HWANGLE_MULTIPLIER	(16.0f)
 #define HWANGLE_RECIPROCAL	(1.0f/16.0f)
 #define TO_HWANGLE(x)		((x) * HWANGLE_MULTIPLIER)
 #define FROM_HWANGLE(x)		((x) * HWANGLE_RECIPROCAL)
 #define HWANGLE_TORAD(x)	((float)x*(M_PI/(180.0*16.0)))
 
+// representation of angles used by this program. derived from Kondo KRS series servo ICS3.5 protocol
+// these angles are 'normalized' to be in -4000..4000 range (270 degrees).
+// in ICS3.5 protocol, the range is 3500..11500 for 270 degrees, with 7500 being the midpoint of rotation.
+#define SVANGLE_180			(5331) // 180 degrees. might not be entirely accurate.
+#define SVANGLE_MULTIPLIER	(29.62f)
+#define SVANGLE_RECIPROCAL	(1.0f/29.62f)
+#define ANGLE2SVANGLE(x)	((x) * SVANGLE_MULTIPLIER)
+#define SVANGLE2ANGLE(x)	((x) * SVANGLE_RECIPROCAL)
+
+#define DEGREES2RADIANS(deg)	((deg) * (M_PI/180.0f))
+#define RADIANS2DEGREES(rad)	((rad) * (180.0f/M_PI))
+
+// biped servo state. these variables seem to represent servo angles in 'normalized' form 
 typedef struct state_s {
-	int16_t K0W[2];			// 股関節前後方向書込用 For writing in the anteroposterior direction of the hip joint
-	int16_t K1W[2];			// 股関節横方向書込用 For hip joint lateral writing
-	int16_t K2W[2];			// 股関節横方向書込用 For hip joint lateral writing
+	int16_t K0W[2];			// 股関節前後方向書込用 hip pitch
+	int16_t K1W[2];			// 股関節横方向書込用 hip roll
+	int16_t K2W[2];			// 股関節横方向書込用 hip yaw
 	int16_t HW[2];			// 膝関節書込用 For knee joint writing
-	int16_t A0W[2];			// 足首上下方向書込用 For writing in the upper and lower direction of the ankle
-	int16_t A1W[2];			// 足首横方向書込用 For ankle lateral writing
-	int16_t U0W[2];			// 肩前後方向書込用 For writing in shoulder anteroposterior direction
-	int16_t U1W[2];			// 肩横後方向書込用 For shoulder lateral and posterior writing
-	int16_t U2W[2];			// 肩ヨー向書込用 For shoulder yaw writing
+	int16_t A0W[2];			// 足首上下方向書込用 ankle pitch
+	int16_t A1W[2];			// 足首横方向書込用 ankle roll
+	int16_t U0W[2];			// 肩前後方向書込用 shoulder pitch
+	int16_t U1W[2];			// 肩横後方向書込用 shoulder roll
+	int16_t U2W[2];			// 肩ヨー向書込用 shoulder yaw
 	int16_t EW[2];			// 肘書込用 For elbow writing
 	int16_t WESTW;			// 腰回転書込用 For waist rotation writing
 	int16_t HEADW;			// 頭回転書込用 For head rotation writing
@@ -104,5 +117,7 @@ extern void keyCont(input_t* input, core_t* core, state_t* state);
 extern int32_t main_init(state_t* state, core_t* core, input_t* input);
 extern void state_init(state_t* state);
 extern void core_init(core_t* core);
+
+extern int32_t main_step(state_t* state, core_t* core, input_t* input, int initialI);
 
 extern int controllerMain();

@@ -34,6 +34,7 @@ bool timer_write(int port, unsigned int data)
 	return true;
 }
 
+#define NSEC	(100000)  // 1000 for 100x slower execution, 1000_00 for 'real time'
 
 long long millis()
 {
@@ -45,7 +46,7 @@ long long millis()
 int timer_start(int port)
 {
 	timerState_t* timer = &sys_timers[port];
-	int delayMs = timer->delay * 0.001;
+	int delayMs = timer->delay / NSEC;
 
 	timer->started = millis();
 
@@ -55,7 +56,7 @@ int timer_start(int port)
 unsigned int timer_read(int port)
 {
 	timerState_t* timer = &sys_timers[port];
-	int delayMs = timer->delay * 0.001;
+	int delayMs = timer->delay / NSEC;
 
 	long long current = millis();
 	if ((current - timer->started) > delayMs)

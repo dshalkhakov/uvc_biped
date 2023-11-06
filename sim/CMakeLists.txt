@@ -5,12 +5,15 @@ cmake_minimum_required (VERSION 3.8)
 
 project ("sim")
 
-include_directories("${CMAKE_SOURCE_DIR}/../../ode-0.16.3/include")
+include_directories("${CMAKE_SOURCE_DIR}/../../ode-0.16.3/include" "../src/sys_null/include" "../src")
 link_directories("${CMAKE_SOURCE_DIR}/../../ode-0.16.3/out/build/x64-debug")
 
+add_library(biped_lib "../src/main.c" "../src/main.h" "../src/sys_sim/i2c.c" "../src/sys_win/timer.c" "../src/sys_sim/uart.c" "../src/sys_sim/ics.c" "../src/sys_sim/stubs.c")
+
 # Add source to this project's executable.
-add_executable (sim ${SIM_SRCS} "biped.cpp" "biped.h" "core.cpp" "core.h")
-target_link_libraries(sim ode_doubled drawstuff)
+add_executable (sim ${SIM_SRCS} "biped.cpp" "biped.h" "core.cpp" "core.h" "main_integration.cpp" "main_integration.h")
+target_link_libraries(sim ode_doubled drawstuff biped_lib)
+target_compile_definitions(sim PRIVATE USING_MAIN)
 
 add_custom_command(
         TARGET sim POST_BUILD

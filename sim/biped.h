@@ -66,17 +66,21 @@ public:
 	int		sv_servoId;		// サーボ識別 servo identification
 };
 
-typedef struct state_s {
+typedef struct simstate_s {
 	// 間接角度 indirect angle
 	double K0W[2];	// 股関節前後方向書込用 hip pitch
 	double K1W[2];	// 股関節横方向書込用 hip roll
-	// double K2W[2];	// 股関節横方向書込用 hip yaw
+	double K2W[2];	// 股関節横方向書込用 hip yaw
 	double HW[2];	// 膝関節書込用 For knee joint writing
 	double A0W[2];	// 足首上下方向書込用 ankle pitch
 	double A1W[2];	// 足首横方向書込用 ankle roll
 	double U0W[2];	// 肩前後方向書込用 shoulder pitch
 	double U1W[2];	// 肩横後方向書込用 shoulder roll
 	double U2W[2];	// 肩ヨー向書込用 shoulder yaw
+#ifdef USING_MAIN
+	double WESTW;
+	double HEADW;
+#endif
 
 	// センサ関連 Sensor related
 	double fbRad = 0;			// 頭前後角度 head front and back angle
@@ -85,20 +89,20 @@ typedef struct state_s {
 	double lrAV = 0;			// 頭左右角速度 Head left and right angular velocity
 	double asiPress_r = 0;	// 右足裏圧力 right foot pressure
 	double asiPress_l = 0;	// 左足裏圧力 left foot pressure
-} state_t;
+} simstate_t;
 
-extern state_t state;
+extern simstate_t simstate;
 
-typedef struct input_s {
+typedef struct siminput_s {
 	int		uvcOff = 0;		// UVC起動フラグ UVC activation flag
 	unsigned char walkF = 0;	// 歩行フラグ	（b0:歩行  b1:未  b2:未）walk flag (b0:walk b1:not yet b2:not yet)
 	double	frRatI;			// 上体角補正用積分係数 Integral coefficient for body angle correction
 	double	frRatA;			// 上体角オフセット値 Upper body angle offset value
 	double	fhRat;			// 足上げ高さ補正値 Foot lift height correction value
 	double	fwMax;			// 歩幅最大値 Maximum stride length
-} input_t;
+} siminput_t;
 
-extern input_t input;
+extern siminput_t siminput;
 
 typedef struct biped_s {
 	bodyStr solep_r;	// 足裏圧力センサ Sole pressure sensor
@@ -121,6 +125,11 @@ typedef struct biped_s {
 	bodyStr K1_l;
 	bodyStr DOU;		// 胴 torso
 	bodyStr HEADT;	// 頭 head
+#ifdef USING_MAIN
+	bodyStr K2_l;		// l hip yaw
+	bodyStr K2_r;		// r hip yaw
+	bodyStr PELVIS;
+#endif
 
 	jointStr soleJ_r;	// 足裏センサ sole sensor
 	jointStr soleJ_l;
@@ -143,6 +152,9 @@ typedef struct biped_s {
 	jointStr K2J_r;		// 股関節ヨー Hip joint yaw
 	jointStr K2J_l;
 	jointStr HEADJ;		// 頭固定 Head fixation
+#ifdef USING_MAIN
+	jointStr WESTJ;
+#endif
 } biped_t;
 
 typedef struct world_s {
