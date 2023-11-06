@@ -38,9 +38,17 @@ globals_t globals;
 //// 汎用 General purpose ////
 int32_t	ii;
 
-float k,k0,k1,ks,kxy,kl;
+float ks,kl;
 
-
+float clamp(float value, float min, float max) {
+	if (value < min) {
+		return min;
+	}
+	if (value > max) {
+		return max;
+	}
+	return value;
+}
 
 ////////////////////////
 //// ターミナル表示 terminal display ////
@@ -186,7 +194,7 @@ void uvcSub(core_t* core){
 	if( core->fwct<=core->landF ){
 
 		// **** 左右方向 left and right direction ****
-		k = core->dyi/(11-core->fwct);
+		float k = core->dyi/(11-core->fwct);
 		core->dyi -= k;
 		core->dyis += k;
 
@@ -205,8 +213,7 @@ void uvcSub(core_t* core){
 		}
 	}
 	if(core->dyis> 70)	core->dyis=  70;
-	if(core->dxis<-70)	core->dxis= -70;
-	if(core->dxis> 70)	core->dxis=  70;
+	core->dxis = clamp(core->dxis, -70, 70);
 
 	// ************ 脚長制御 leg length control ************
 	if(HEIGHT>core->autoH){						// 脚長を徐々に復帰させる Gradually restore leg length
@@ -255,8 +262,7 @@ void uvcSub2(core_t* core, state_t* state){
 	core->autoH += (HEIGHT-core->autoH)/(core->fwctEnd-core->fwct+1);
 
 	if(core->dyis> 70)	core->dyis=  70;
-	if(core->dxis<-70)	core->dxis= -70;
-	if(core->dxis> 70)	core->dxis=  70;
+	core->dxis = clamp(core->dxis, -70, 70);
 }
 
 
@@ -307,10 +313,8 @@ void uvc(core_t* core){
 		core->autoH = kl*cos(ks);				// K1までの高さ更新 Height update up to K1
 
 		// ************ UVC積分値リミット設定 UVC integral value limit setting ************
-		if(core->dyi<  0) core->dyi=   0;
-		if(core->dyi> 45) core->dyi=  45;
-		if(core->dxi<-45) core->dxi= -45;
-		if(core->dxi> 45) core->dxi=  45;
+		core->dyi = clamp(core->dyi, 0, 45);
+		core->dxi = clamp(core->dxi, -45, 45);
 
 		// ************ 遊脚側を追従させる Make the free leg follow ************
 
@@ -477,15 +481,15 @@ void counterCont(core_t* core){
 		core->fwct=0;
 
 		core->fh=0;
-		k=core->dyis;
+		float k=core->dyis;
 		core->dyis=core->dyi;
 		core->dyib=core->dyi;
 		core->dyi=k;
 
-		k=core->dxis;
+		float k1=core->dxis;
 		core->dxis=core->dxi;
 		core->dxib=core->dxi;
-		core->dxi=k;
+		core->dxi=k1;
 	}
 	else{
 		core->fwct+=core->fwctUp;
@@ -638,7 +642,7 @@ case 750:
 	if(	core->fwct>30 ){
 		core->fwct=1;
 
-		k=sqrt(0.5* Vec2LengthSquared(core->dxis, core->dyis));	// 移動量、前後方向は減少させる Reduce the amount of movement and the forward and backward directions
+		float k=sqrt(0.5* Vec2LengthSquared(core->dxis, core->dyis));	// 移動量、前後方向は減少させる Reduce the amount of movement and the forward and backward directions
 		core->swMax=17+17*k/45;
 
 		core->mode=760;		// 状態遷移 state transition
