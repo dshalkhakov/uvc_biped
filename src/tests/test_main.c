@@ -393,7 +393,7 @@ void footCont_initialPosture_hipPitchChanged(void** state) {
     state_init(&st);
 
     // act
-    footCont(&core, &st, 0, 0, 185, 0);
+    footCont(&core, &st, (vec2_t) { 0, 0 }, 185, 0);
 
     // assert
     assert_int_equal(st.K0W[0], 50);
@@ -409,7 +409,7 @@ void footCont_initialPosture_kneeJointMoved(void** state) {
     state_init(&st);
 
     // act
-    footCont(&core, &st, 0, 0, 185, 0);
+    footCont(&core, &st, (vec2_t) { 0, 0 }, 185, 0);
 
     // assert
     assert_int_equal(st.HW[0], 100);
@@ -425,7 +425,7 @@ void footCont_initialPosture_ankleMoved(void** state) {
     state_init(&st);
 
     // act
-    footCont(&core, &st, 0, 0, 185, 0);
+    footCont(&core, &st, (vec2_t) { 0, 0 }, 185, 0);
 
     // assert
     assert_int_equal(st.A0W[0], 50);
@@ -439,7 +439,7 @@ void feetCont1_doesFoo(void** state) {
     core_init(&core);
     state_init(&st);
 
-    feetCont1(&core, &st, 0, 0, 0, 0, 0);
+    feetCont1(&core, &st, (vec2_t) { 0, 0 }, (vec2_t) { 0, 0 }, 0);
 }
 
 // TODO feetCont2
