@@ -264,28 +264,29 @@ void uvcSub2(core_t* core, state_t* state){
 /////////////////
 //// UVC制御 UVC control ////
 /////////////////
+// inputs: pitch, roll, jikuasi, landF, landB, fwct, fwctEnd, sw
+// outputs: rollt, pitcht, dyi, dxi, dxis, dyis, autoH
 void uvc(core_t* core){
-	float pb,rb,k;
+
+	float pitch = core->pitch, roll = core->roll;
 
 	// ************ 傾斜角へのオフセット適用 Apply offset to slope angle ************
-	rb=core->roll;		// 一時退避 temporary evacuation
-	pb=core->pitch;
-	k=sqrt(core->pitch*core->pitch+core->roll*core->roll);	// 合成傾斜角 Resultant tilt angle
+	float k= Vec2Length(pitch,roll);	// 合成傾斜角 Resultant tilt angle
 	if( k>0.033 ){
 		k=(k-0.033)/k;
-		core->pitch *=k;
-		core->roll  *=k;
+		pitch *=k;
+		roll  *=k;
 	}
 	else{
-		core->pitch =0;
-		core->roll  =0;
+		pitch =0;
+		roll  =0;
 	}
 
 
 	// ************ 傾斜角に係数適用 Apply coefficient to slope angle ************
-	core->rollt =0.25*core->roll;
+	core->rollt =0.25*roll;
 	if(core->jikuasi==0)	core->rollt = -core->rollt;		// 横方向符号調整 Horizontal symbol adjustment
-	core->pitcht=0.25*core->pitch;
+	core->pitcht=0.25*pitch;
 
 	if(core->fwct>core->landF && core->fwct<=core->fwctEnd-core->landB ){
 
@@ -330,8 +331,6 @@ void uvc(core_t* core){
 		}
 		if(k+ks<0)core->dyis-=k+ks;		// 遊脚を平衡に補正 Correct the swing leg to balance
 	}
-	core->roll =rb;
-	core->pitch=pb;
 }
 
 
@@ -339,6 +338,8 @@ void uvc(core_t* core){
 ////////////////////
 //// 脚上げ操作 Leg raising operation ////
 ////////////////////
+// inputs: fwct, fwctEnd, landF, landB, fhMax
+// outputs: fh
 void footUp(core_t* core){
 
 	if( core->fwct>core->landF && core->fwct<=(core->fwctEnd- core->landB) ) core->fh = core->fhMax * sin( M_PI*(core->fwct-core->landF)/(core->fwctEnd-(core->landF+core->landB)) );
@@ -350,6 +351,8 @@ void footUp(core_t* core){
 ////////////////////
 //// 横振り制御 Horizontal swing control ////
 ////////////////////
+// inputs: fwct, fwctEnd, swMax, dxi, dyi, wt
+// outputs: swx, swy
 void swCont(core_t* core){
 	float k,t;
 
@@ -365,6 +368,8 @@ void swCont(core_t* core){
 ////////////////
 //// 腕制御 arm control ////
 ////////////////
+// inputs: dyis
+// outputs: state U1W[0], state U1W[1]
 void armCont(core_t* core, state_t* state){
 	state->U1W[0]=510*core->dyis/70; // 股幅に応じ腕を広げる Spread your arms according to the width of your thighs
 	if(state->U1W[0]<0) state->U1W[0]=0;
@@ -376,6 +381,8 @@ void armCont(core_t* core, state_t* state){
 ////////////////////
 //// 最終脚駆動 Last leg drive ////
 ////////////////////
+// inputs: HW[s], 
+// outputs: K0W[s], A0W[s], autoH, K1W[s], A1W[s]
 void footCont(core_t* core, state_t* state, float x,float y,float h,int s){
 // x:中点を0とする設置点前後方向距離（前+） Distance in the longitudinal direction of the installation point with the midpoint as 0 (front +)
 // y:中点を0とする設置点左右方向距離（右+） Distance in the horizontal direction of the installation point with the midpoint as 0 (right +)
@@ -390,9 +397,10 @@ void footCont(core_t* core, state_t* state, float x,float y,float h,int s){
 
 	float k;
 
-	k = sqrt(x*x+pow(sqrt(y*y+h*h)-64.5,2));	// K0-A0間直線距離 Straight line distance between K0-A0
+	k = Vec2Length(x, Vec2Length(y,h)-64.5);	// K0-A0間直線距離 Straight line distance between K0-A0
 	if(k>129){
-		core->autoH = sqrt(pow(sqrt(129*129-x*x)+64.5,2)-y*y);// 高さ補正 height correction
+		float temp1 = sqrt(129*129-x*x)+64.5;
+		core->autoH = sqrt(temp1*temp1-y*y);// 高さ補正 height correction
 		k=129;
 	}
 
@@ -423,6 +431,8 @@ void footCont(core_t* core, state_t* state, float x,float y,float h,int s){
 ////////////////////
 //// 統合脚駆動 integrated leg drive ////
 ////////////////////
+// inputs: jikuasi, x0, y0, x1, y1, s
+// outputs: wt, wk, state WESTW, state K2W[0], state K2W[1]
 void feetCont1(core_t* core, state_t* state, float x0, float y0, float x1, float y1, int s){
 
 	if(s==1){
