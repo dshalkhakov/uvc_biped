@@ -381,11 +381,11 @@ void armCont(core_t* core, state_t* state){
 ////////////////////
 //// 最終脚駆動 Last leg drive ////
 ////////////////////
-// inputs: HW[s], 
+// inputs: HW[s], p0 : vec2_t, h, s
 // outputs: K0W[s], A0W[s], autoH, K1W[s], A1W[s]
-void footCont(core_t* core, state_t* state, float x,float y,float h,int s){
-// x:中点を0とする設置点前後方向距離（前+） Distance in the longitudinal direction of the installation point with the midpoint as 0 (front +)
-// y:中点を0とする設置点左右方向距離（右+） Distance in the horizontal direction of the installation point with the midpoint as 0 (right +)
+void footCont(core_t* core, state_t* state, vec2_t p0,float h,int s){
+// p0 x:中点を0とする設置点前後方向距離（前+） Distance in the longitudinal direction of the installation point with the midpoint as 0 (front +)
+// p0 y:中点を0とする設置点左右方向距離（右+） Distance in the horizontal direction of the installation point with the midpoint as 0 (right +)
 // h:足首ロール軸を基準に股関節ロール軸までの地上高(Max194.5) Ground clearance from the ankle roll axis to the hip roll axis (Max 194.5)
 // s:軸足0/遊脚1、指定 Pivot leg 0/swing leg 1, specified
 // 真正面からみたK1-A1間距離 	k = sqrt( x*x + h*h ); Distance between K1 and A1 when viewed directly from the front
@@ -395,16 +395,14 @@ void footCont(core_t* core, state_t* state, float x,float y,float h,int s){
 // K0-A0間直線距離 k = sqrt( x*x + k*k ); まとめると↓ -- Straight line distance between K0 and A0 k = sqrt( x*x + k*k ); To summarize, ↓
 // 高さhの最大は40+65+65+24.5=194.5mm -- Maximum height h is 40+65+65+24.5=194.5mm
 
-	float k;
-
-	k = Vec2Length(x, Vec2Length(y,h)-64.5);	// K0-A0間直線距離 Straight line distance between K0-A0
+	float k = Vec2Length(p0[0], Vec2Length(p0[1], h) - 64.5);	// K0-A0間直線距離 Straight line distance between K0-A0
 	if(k>129){
-		float temp1 = sqrt(129*129-x*x)+64.5;
-		core->autoH = sqrt(temp1*temp1-y*y);// 高さ補正 height correction
+		float temp1 = sqrt(129*129-p0[0]*p0[0]) + 64.5;
+		core->autoH = sqrt(temp1*temp1-p0[1]*p0[1]);// 高さ補正 height correction
 		k=129;
 	}
 
-	x = CHG_SVA*asin(x/k);						// K0脚振り角度 K0 leg swing angle
+	float x = CHG_SVA*asin(p0[0]/k);						// K0脚振り角度 K0 leg swing angle
 	k = CHG_SVA*acos(k/130);					// 膝曲げ角度 knee bending angle
 	if(k>1800)k=1800;							// 60°Max
 
@@ -416,7 +414,7 @@ void footCont(core_t* core, state_t* state, float x,float y,float h,int s){
 	state->K0W[s]	= k+x;
 	state->A0W[s]	= k-x;
 
-	k = CHG_SVA*atan(y/h);						// K1角度 K1 angle
+	k = CHG_SVA*atan(p0[1]/h);						// K1角度 K1 angle
 
 	if		(k-state->K1W[s]> 100) k=state->K1W[s]+100;		// 回転速度最大 0.13s/60deg = 138count -- Maximum rotation speed
 	else if	(k-state->K1W[s]<-100) k=state->K1W[s]-100;
@@ -431,19 +429,19 @@ void footCont(core_t* core, state_t* state, float x,float y,float h,int s){
 ////////////////////
 //// 統合脚駆動 integrated leg drive ////
 ////////////////////
-// inputs: jikuasi, x0, y0, x1, y1, s
+// inputs: jikuasi, p0, p1, s
 // outputs: wt, wk, state WESTW, state K2W[0], state K2W[1]
-void feetCont1(core_t* core, state_t* state, float x0, float y0, float x1, float y1, int s){
+void feetCont1(core_t* core, state_t* state, vec2_t p0, vec2_t p1, int s){
 
 	if(s==1){
-		if(y0+21.5==0)		core->wt = 0;			// 0除算回避 avoid divide by 0
+		if(p0[1]+21.5==0)		core->wt = 0;			// 0除算回避 avoid divide by 0
 		else if(core->jikuasi==0){
-			core->wt = 0.5*atan( x0/(y0+21.5) );	// 腰回転角度 waist rotation angle
-			core->wk=fabs(15.0*x0/45);			// 45:最大歩幅 15:足内側最大移動量 45: Maximum stride length 15: Maximum amount of movement on the inside of the foot
+			core->wt = 0.5*atan( p0[0]/(p0[1]+21.5) );	// 腰回転角度 waist rotation angle
+			core->wk=fabs(15.0*p0[0]/45);			// 45:最大歩幅 15:足内側最大移動量 45: Maximum stride length 15: Maximum amount of movement on the inside of the foot
 		}
 		else{
-			core->wt = 0.5*atan( -x1/(y1+21.5) );	// 腰回転角度 waist rotation angle
-			core->wk=fabs(15.0*x1/45);
+			core->wt = 0.5*atan( -p1[0]/(p1[1]+21.5) );	// 腰回転角度 waist rotation angle
+			core->wk=fabs(15.0*p1[0]/45);
 		}
 
 		state->WESTW = core->wt*CHG_SVA;					// 腰回転（+で上体右回転） Hip rotation (+: upper body rotation to the right)
@@ -452,20 +450,20 @@ void feetCont1(core_t* core, state_t* state, float x0, float y0, float x1, float
 	}
 
 	if(core->jikuasi==0){
-		footCont(core, state, x0,	y0-core->wk,  core->autoH   ,	0 );
-		footCont(core, state, x1,	y1-core->wk,  core->autoH-core->fh,	1 );
+		footCont(core, state, (vec2_t){ p0[0],	p0[1]-core->wk },  core->autoH   ,	0 );
+		footCont(core, state, (vec2_t){ p1[0],	p1[1]-core->wk },  core->autoH-core->fh,	1 );
 	}
 	else{
-		footCont(core, state, x0,	y0-core->wk,  core->autoH-core->fh,	0 );
-		footCont(core, state, x1,	y1-core->wk,  core->autoH   ,	1 );
+		footCont(core, state, (vec2_t){ p0[0],	p0[1]-core->wk },  core->autoH-core->fh,	0 );
+		footCont(core, state, (vec2_t){ p1[0],	p1[1]-core->wk },  core->autoH   ,	1 );
 	}
 }
 
 
 
 void feetCont2(core_t* core, state_t* state, int s){
-	if(core->jikuasi==0)	feetCont1( core, state, core->dxi  -core->swx, core->dyi  -core->swy,core->dxis-core->swx, core->dyis+core->swy ,s );
-	else					feetCont1( core, state, core->dxis -core->swx, core->dyis +core->swy, core->dxi-core->swx, core->dyi  -core->swy ,s );
+	if(core->jikuasi==0)	feetCont1( core, state, (vec2_t){ core->dxi  -core->swx, core->dyi  -core->swy }, (vec2_t){ core->dxis-core->swx, core->dyis+core->swy },s );
+	else					feetCont1( core, state, (vec2_t){ core->dxis -core->swx, core->dyis +core->swy }, (vec2_t){ core->dxi-core->swx, core->dyi-core->swy },s );
 }
 
 
@@ -563,9 +561,9 @@ case 710:
 		core->jikuasi=1;
 
 		//// 初期姿勢 Initial posture ////
-		footCont(core, state, 0,0,HEIGHT,0);
+		footCont(core, state, (vec2_t){ 0,0 },HEIGHT,0);
 		core->jikuasi=0;
-		footCont(core, state, 0,0,HEIGHT,1);
+		footCont(core, state, (vec2_t){ 0,0 },HEIGHT,1);
 		core->mode=720;					// 状態遷移 state transition
 		sprintf( (char *)globals.dsp,"mode=720\r\n" );
 		printS((char *)globals.dsp);

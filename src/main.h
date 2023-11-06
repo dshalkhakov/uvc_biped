@@ -1,4 +1,6 @@
-﻿#define Vec2Length(x,y)		(sqrt((x)*(x) + (y)*(y)))
+﻿typedef float vec2_t[2];
+
+#define Vec2Length(x,y)		(sqrt((x)*(x) + (y)*(y)))
 
 // svangle_t is radians * SVANGLE_MULTIPLIER. range is -4000..4000, representing max 
 // servo rotation of 270 degrees, midpoint is zero.
