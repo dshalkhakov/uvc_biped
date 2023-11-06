@@ -587,8 +587,8 @@ static void createBody (biped_t* biped){
 	dRFromAxisAndAngle(world_R, 0, 0, 1, -M_PI_2);// 回転 rotate
 	dBodySetRotation(biped->HEADT.bodyId, world_R);
 	// torso + pelvis
-	setBody  (&biped->DOU,		BODYTYPE_BOX,COLOR_BODY,	40, 84, 90,0,		0,	0,	275,	1,	1.0);	// 胴 torso
-	setBody  (&biped->PELVIS,	BODYTYPE_BOX,COLOR_GREEN,	40, 84, 15,0,		0,	0,	220,	1,	0.24);
+	setBody  (&biped->DOU,		BODYTYPE_BOX,COLOR_BODY,	40, 84, 60,0,		0,	0,	295,	1,	1.0);	// 胴 torso
+	setBody  (&biped->PELVIS,	BODYTYPE_BOX,COLOR_GREEN,	40, 64, 45,0,		0,	0,	240,	1,	0.24);
 #else
 	setBody  (&biped->DOU,		BODYTYPE_BOX,COLOR_BODY,	40, 84, 130,0,		0,	0,	260,	1,	1.24);	// 胴 torso
 #endif

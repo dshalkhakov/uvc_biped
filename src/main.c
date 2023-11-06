@@ -1254,7 +1254,7 @@ pio_write (PIO_T2, HIGH);	// OFF(wait時間確認) -- OFF (check wait time)
 
 	if(core->tNow>core->cycle+10){
 		sprintf( (char *)globals.dsp,"************** %d \r\n",(int)core->tNow);
-		printS ( (char *)globals.dsp );
+		// printS ( (char *)globals.dsp ); // DS: disabled to decrease chatter
 	}
 	timer_start(TIMER);
 
@@ -1264,16 +1264,16 @@ pio_write (PIO_T2, HIGH);	// OFF(wait時間確認) -- OFF (check wait time)
 	////////////////////
 
 	//// 関節リミット joint limit ////
-	if(state->K1W[0]> 800)state->K1W[0]	= 800;
-	if(state->K1W[0]<-450)state->K1W[0]	=-450;
+	if(state->K1W[0]> 800)state->K1W[0]	= 800; // +27 deg
+	if(state->K1W[0]<-450)state->K1W[0]	=-450; // -15 deg
 	if(state->K1W[1]> 800)state->K1W[1]	= 800;
 	if(state->K1W[1]<-450)state->K1W[1]	=-450;
-	if(state->A0W[0]> 3500)state->A0W[0]	= 3500;
-	if(state->A0W[0]<-3500)state->A0W[0]	=-3500;
+	if(state->A0W[0]> 3500)state->A0W[0]	= 3500; // +118 deg
+	if(state->A0W[0]<-3500)state->A0W[0]	=-3500; // +118 deg
 	if(state->A0W[1]> 3500)state->A0W[1]	= 3500;
 	if(state->A0W[1]<-3500)state->A0W[1]	=-3500;
-	if(state->A1W[0]> 420)state->A1W[0]	= 420;	// 添付品曲加工+アルミソールでの実験結果 Experimental results with attached product curved processing + aluminum sole
-	if(state->A1W[0]<-900)state->A1W[0]	=-900;	// 添付品曲加工+アルミソールでの実験結果 Experimental results with attached product curved processing + aluminum sole
+	if(state->A1W[0]> 420)state->A1W[0]	= 420;	// 添付品曲加工+アルミソールでの実験結果 Experimental results with attached product curved processing + aluminum sole +14 deg
+	if(state->A1W[0]<-900)state->A1W[0]	=-900;	// 添付品曲加工+アルミソールでの実験結果 Experimental results with attached product curved processing + aluminum sole -30.3 deg
 	if(state->A1W[1]> 420)state->A1W[1]	= 420;	// 添付品曲加工+アルミソールでの実験結果 Experimental results with attached product curved processing + aluminum sole
 	if(state->A1W[1]<-900)state->A1W[1]	=-900;	// 添付品曲加工+アルミソールでの実験結果 Experimental results with attached product curved processing + aluminum sole
 

@@ -59,11 +59,11 @@ void main_integration_simLoop() {
 
 void main_integration_restart() {
 	g_main_initialI = main_init(&g_mainstate, &g_maincore, &g_maininput);
+	g_maincore.mode = 710;
 }
 
 int sim_ics_set_pos(int port, unsigned char id, unsigned short pos) {
 	simstate_t* state = &simstate;
-	float	angle = DEGREES2RADIANS(SVANGLE2ANGLE(-pos + 7500));
 	double* dest = NULL;
 
 	switch (port) {
@@ -116,6 +116,8 @@ int sim_ics_set_pos(int port, unsigned char id, unsigned short pos) {
 	default:
 		break;
 	}
+
+	float	angle = DEGREES2RADIANS(SVANGLE2ANGLE(-pos + 7500));
 
 	if (dest != NULL) {
 		if (pos == 0) {
