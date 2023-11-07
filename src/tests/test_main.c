@@ -378,7 +378,118 @@ void core_init_setsInitialValues(void** state) {
 
 // TODO uvcSub
 // TODO uvcSub2
-// TODO uvc
+
+void uvc_tiltLte0pt033_notWalking_updatesPitchtRollt(void** state) {
+    // arrange
+    core_t core;
+
+    core_init(&core);
+    core.pitch  = DEGREES2RADIANS(0.1);
+    core.roll   = DEGREES2RADIANS(0.1);
+    core.fwct   = 18;
+    core.fw     = 18;
+
+    // act
+    uvc(&core);
+
+    // assert
+    assert_float_equal(core.pitcht, core.pitch * 0.25, 0.001);
+    assert_float_equal(core.rollt, core.roll * 0.25, 0.001);
+}
+
+void uvc_tiltG0pt033_notWalking_updatesPitchtRolltProportionally(void** state) {
+    // arrange
+    core_t core;
+
+    float factor = 0.154426098;
+    core_init(&core);
+    core.pitch  = DEGREES2RADIANS(2);
+    core.roll   = DEGREES2RADIANS(1);
+    core.fwct   = 18;
+    core.fw     = 18;
+
+    // act
+    uvc(&core);
+
+    // assert
+    assert_float_equal(core.pitcht, core.pitch * 0.25 * factor, 0.00001);
+    assert_float_equal(core.rollt, core.roll * 0.25 * factor, 0.00001);
+}
+
+void uvc_tiltG0pt033_notWalkingJikuasiIs0_rolltSignAdjusted(void** state) {
+    // arrange
+    core_t core;
+
+    core_init(&core);
+    core.pitch  = DEGREES2RADIANS(2);
+    core.roll   = DEGREES2RADIANS(1);
+    core.fwct   = 18;
+    core.fw     = 18;
+    core.jikuasi = 0;
+    float factor = 0.154426098;
+
+    // act
+    uvc(&core);
+
+    // assert
+    assert_float_equal(core.pitcht, core.pitch * 0.25 * factor, 0.00001);
+    assert_float_equal(core.rollt, -(core.roll * 0.25 * factor), 0.00001);
+}
+
+void uvc_tiltG0pt033_notWalking_dNunchanged(void** state) {
+    // arrange
+    core_t core;
+
+    core_init(&core);
+    core.pitch  = DEGREES2RADIANS(2);
+    core.roll   = DEGREES2RADIANS(1);
+    core.fwct   = 18;
+    core.fw     = 18;
+    core.dxi    = 1;
+    core.dyi    = 1;
+    core.dxis   = 1.5;
+    core.dyis   = 1.5;
+
+    // act
+    uvc(&core);
+
+    // assert
+    assert_float_equal(core.dxi, 1, 0.001);
+    assert_float_equal(core.dyi, 1, 0.001);
+    assert_float_equal(core.dxis, 1.5, 0.001);
+    assert_float_equal(core.dyis, 1.5, 0.001);
+}
+
+void uvc_tiltG0pt033_middleOfWalkCycle_dNcalculated(void** state) {
+    // arrange
+    core_t core;
+
+    core_init(&core);
+    core.pitch  = DEGREES2RADIANS(2);
+    core.roll   = DEGREES2RADIANS(1);
+    core.fwct   = 9;
+    core.fwctEnd= 18;
+    core.dxi    = 1;
+    core.dyi    = 1;
+    core.dxis   = 1.5;
+    core.dyis   = 1.5;
+    core.landB  = 0;
+    core.landF  = 0;
+    core.sw     = 0;
+    core.autoH = 140;
+    core.jikuasi = 1;
+
+    // act
+    uvc(&core);
+
+    // assert
+    assert_float_equal(core.dxi,    1.188665,   0.0001);
+    assert_float_equal(core.dyi,    1.09433329, 0.0001);
+    assert_float_equal(core.dxis,  -1.188665,   0.0001);
+    assert_float_equal(core.dyis,   1.09433329, 0.0001);
+    assert_float_equal(core.autoH,  139.997818, 0.0001);
+}
+
 // TODO footUp
 // TODO swCont
 // TODO armCont
@@ -575,6 +686,11 @@ int main(void) {
         cmocka_unit_test(state_init_zeroesServos),
         cmocka_unit_test(core_init_setsInitialValues),
         cmocka_unit_test(core_init_zeroesValue),
+        cmocka_unit_test(uvc_tiltLte0pt033_notWalking_updatesPitchtRollt),
+        cmocka_unit_test(uvc_tiltG0pt033_notWalking_updatesPitchtRolltProportionally),
+        cmocka_unit_test(uvc_tiltG0pt033_notWalkingJikuasiIs0_rolltSignAdjusted),
+        cmocka_unit_test(uvc_tiltG0pt033_notWalking_dNunchanged),
+        cmocka_unit_test(uvc_tiltG0pt033_middleOfWalkCycle_dNcalculated),
         cmocka_unit_test(footCont_initialPosture_hipPitchChanged),
         cmocka_unit_test(footCont_initialPosture_kneeJointMoved),
         cmocka_unit_test(footCont_initialPosture_ankleMoved),

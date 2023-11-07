@@ -38,8 +38,6 @@ globals_t globals;
 //// 汎用 General purpose ////
 int32_t	ii;
 
-float ks,kl;
-
 vec2_t vec2_zero = { 0.0f, 0.0f };
 
 float clamp(float value, float min, float max) {
@@ -281,40 +279,46 @@ void uvc(core_t* core){
 	float pitch = core->pitch, roll = core->roll;
 
 	// ************ 傾斜角へのオフセット適用 Apply offset to slope angle ************
-	float k= Vec2Length(pitch,roll);	// 合成傾斜角 Resultant tilt angle
-	if( k>0.033 ){
-		k=(k-0.033)/k;
-		pitch *=k;
-		roll  *=k;
-	}
-	else{
-		pitch =0;
-		roll  =0;
+	{
+		float k= Vec2Length(pitch,roll);	// 合成傾斜角 Resultant tilt angle
+		if( k>0.033 ){
+			float k1=(k-0.033)/k;
+			pitch *=k1;
+			roll  *=k1;
+		}
+		else{
+			pitch =0;
+			roll  =0;
+		}
 	}
 
 
 	// ************ 傾斜角に係数適用 Apply coefficient to slope angle ************
 	core->rollt =0.25*roll;
-	if(core->jikuasi==0)	core->rollt = -core->rollt;		// 横方向符号調整 Horizontal symbol adjustment
+	if(core->jikuasi==0)	core->rollt = -core->rollt;		// 横方向符号調整 Horizontal sign adjustment
 	core->pitcht=0.25*pitch;
 
 	if(core->fwct>core->landF && core->fwct<=core->fwctEnd-core->landB ){
 
 		// ************ UVC主計算 UVC main calculation ************
-		k	  = atan ((core->dyi-core->sw)/core->autoH );	// 片脚の鉛直に対する開脚角 Leg angle relative to the vertical of one leg
-		kl	  = core->autoH/cos(k);			// 前から見た脚投影長 Leg projection length seen from the front
-		ks = k+core->rollt;						// 開脚角に横傾き角を加算 Add side tilt angle to leg angle
-		k  = kl*sin(ks);						// 中点から横接地点までの左右距離 Left-right distance from midpoint to lateral contact point
-		core->dyi   = k+core->sw;				// 横方向UVC補正距離 Horizontal direction UVC correction distance
-		core->autoH = kl*cos(ks);				// K1までの高さ更新 Height update up to K1
+		{
+			float k	= atan ((core->dyi-core->sw)/core->autoH );	// 片脚の鉛直に対する開脚角 Leg angle relative to the vertical of one leg
+			float kl = core->autoH/cos(k);			// 前から見た脚投影長 Leg projection length seen from the front
+			float ks = k+core->rollt;					// 開脚角に横傾き角を加算 Add side tilt angle to leg angle
+			float kk	= kl*sin(ks);					// 中点から横接地点までの左右距離 Left-right distance from midpoint to lateral contact point
+			core->dyi	= kk+core->sw;					// 横方向UVC補正距離 Horizontal direction UVC correction distance
+			core->autoH = kl*cos(ks);				// K1までの高さ更新 Height update up to K1
+		}
 
 		// **** UVC（前後） UVC (front and back) *****
-		k 	  = atan( core->dxi/core->autoH );	// 片脚のX駆動面鉛直から見た現時点の前後開脚角 Current anteroposterior leg angle as seen from the vertical direction of the X drive plane of one leg
-		kl	  = core->autoH/cos(k);				// 片脚のX駆動面鉛直から見た脚長 Leg length as seen from the vertical direction of the X drive surface of one leg
-		ks	  = k+core->pitcht;					// 振出角に前後傾き角を加算 Add the forward and backward tilt angle to the swing angle
-		k	  = kl*sin(ks);					// 前後方向UVC補正距離 UVC correction distance in front and rear directions
-		core->dxi   = k;						// 前後方向UVC補正距離 UVC correction distance in front and rear directions
-		core->autoH = kl*cos(ks);				// K1までの高さ更新 Height update up to K1
+		{
+			float k = atan( core->dxi/core->autoH );	// 片脚のX駆動面鉛直から見た現時点の前後開脚角 Current anteroposterior leg angle as seen from the vertical direction of the X drive plane of one leg
+			float kl = core->autoH/cos(k);			// 片脚のX駆動面鉛直から見た脚長 Leg length as seen from the vertical direction of the X drive surface of one leg
+			float ks = k+core->pitcht;				// 振出角に前後傾き角を加算 Add the forward and backward tilt angle to the swing angle
+			float kk = kl*sin(ks);					// 前後方向UVC補正距離 UVC correction distance in front and rear directions
+			core->dxi = kk;								// 前後方向UVC補正距離 UVC correction distance in front and rear directions
+			core->autoH = kl*cos(ks);				// K1までの高さ更新 Height update up to K1
+		}
 
 		// ************ UVC積分値リミット設定 UVC integral value limit setting ************
 		core->dyi = clamp(core->dyi, 0, 45);
@@ -329,15 +333,19 @@ void uvc(core_t* core){
 		core->dxis = -core->dxi;				// 遊脚X目標値 Idle leg X target value
 
 		// ************ 両脚内側並行補正 Medial parallel correction for both legs ************
-		if(core->jikuasi==0){			// 両脚を並行以下にしない Do not let your legs be less than parallel
-			k = -core->sw+core->dyi;	// 右足の外側開き具合 Outside opening of right foot
-			ks=  core->sw+core->dyis;	// 左足の外側開き具合 Outside opening of left foot
+		{
+			float k, ks;
+
+			if(core->jikuasi==0){			// 両脚を並行以下にしない Do not let your legs be less than parallel
+				k = -core->sw+core->dyi;	// 右足の外側開き具合 Outside opening of right foot
+				ks=  core->sw+core->dyis;	// 左足の外側開き具合 Outside opening of left foot
+			}
+			else{
+				ks= -core->sw+core->dyi;	// 左足の外側開き具合 Outside opening of left foot
+				k =  core->sw+core->dyis;	// 右足の外側開き具合 Outside opening of right foot
+			}
+			if(k+ks<0)core->dyis-=k+ks;		// 遊脚を平衡に補正 Correct the swing leg to balance
 		}
-		else{
-			ks= -core->sw+core->dyi;	// 左足の外側開き具合 Outside opening of left foot
-			k =  core->sw+core->dyis;	// 右足の外側開き具合 Outside opening of right foot
-		}
-		if(k+ks<0)core->dyis-=k+ks;		// 遊脚を平衡に補正 Correct the swing leg to balance
 	}
 }
 

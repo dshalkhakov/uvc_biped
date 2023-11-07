@@ -61,7 +61,8 @@ typedef struct core_s {
 	// When jikuasi is 0, the right foot is in contact with the ground, and when it is 1,
 	// the left foot is in contact with the ground.
 	int16_t jikuasi;
-	int16_t motCt, motCtBak, motCtBak2, motCtdat;
+	int16_t motCt;					// used in initial posture as a 'timer'
+	int16_t motCtBak, motCtBak2, motCtdat;
 	int16_t mode, modeNxt, subMode; // keyMode
 	int16_t	pitch_gyr, roll_gyr, yaw_gyr;
 	int16_t	cycle, tst0;
@@ -85,7 +86,7 @@ typedef struct core_s {
 
 	float fwctEnd;					// DS: 一周期最大カウント数 Maximum count in one cycle
 	float fwct;						// DS: 一周期カウンタ One cycle counter
-	float fwctUp;
+	float fwctUp;					// DS: fwct increment value
 	radangle_t pitch, roll, pitcht, rollt;
 	float pitch_gyrg, roll_gyrg;
 	float wk, wt;
