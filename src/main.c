@@ -229,6 +229,8 @@ void uvcSub(core_t* core){
 	if(140>core->autoH)core->autoH=140;					// 最低脚長補償 Minimum leg length compensation
 }
 
+// inputs: fwctEnd, fwct, dyi, dxi, landF, autoH
+// outputs:  dyi, dxi, wk, state WESTW, K2W[0], K2W[1], diys, dxis, autoH
 void uvcSub2(core_t* core, state_t* state){
 	float k0,k1;
 
@@ -472,7 +474,8 @@ void feetCont1(core_t* core, state_t* state, vec2_t p0, vec2_t p1, int s){
 }
 
 
-
+// inputs: jikuasi, dxi, swx, dyi, swy
+// outputs: feetCont1() outputs
 void feetCont2(core_t* core, state_t* state, int s){
 	vec2_t v1, v2;
 
@@ -493,6 +496,8 @@ void feetCont2(core_t* core, state_t* state, int s){
 ///////////////////////////
 //// 周期カウンタの制御 Period counter control ////
 ///////////////////////////
+// inputs: fwct, fwctEnd
+// outputs: jikuasi, fwct, fwctUp, fh, dyis, dyi, dyib, dxis, dxi, dxib
 void counterCont(core_t* core){
 	if(core->fwct>=core->fwctEnd){	// 簡易仕様（固定周期） Simple specifications (fixed cycle)
 		core->jikuasi^=1;

@@ -95,9 +95,9 @@ typedef struct core_s {
 	float dxi, dxib, dxis;
 	float rollg, fw, fwi, fws, sw, freeBak, tt0;
 	float supportingLeg, swingLeg;	// 支持脚、遊脚股関節振出角度 Support leg, swing leg hip joint swing angle
-	float footH;					// 脚上げ高さ leg lift height
-	float swx, swy, swMax;			// 横振り巾 Horizontal width
-	float autoH, fh, fhMax;			// 脚上げ高さ leg lift height
+	float footH;					// 脚上げ高さ leg lift height in mm
+	float swx, swy, swMax;			// 横振り巾 Horizontal width in mm
+	float autoH, fh, fhMax;			// 脚上げ高さ leg lift height in mm
 } core_t;
 
 typedef struct input_s {

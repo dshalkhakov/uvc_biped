@@ -443,7 +443,121 @@ void feetCont1_doesFoo(void** state) {
 }
 
 // TODO feetCont2
-// TODO counterCont
+
+void counterCont_cycle_fwctProgresses(void** state) {
+    // arrange
+    core_t core;
+
+    core_init(&core);
+    core.jikuasi = 1;
+    core.fwctEnd = 18;
+    core.fwct   = 0;
+    core.fwctUp = 1;
+
+    // act
+    counterCont(&core);
+
+    // assert
+    assert_int_equal(1, core.jikuasi);
+    assert_float_equal(core.fwct, 1.0f, 0.000001);
+}
+
+void counterCont_cycle_fwctLimitedByFwctMax(void** state) {
+    // arrange
+    core_t core;
+
+    core_init(&core);
+    core.jikuasi = 1;
+    core.fwctEnd = 18;
+    core.fwct = 17;
+    core.fwctUp = 2;
+
+    // act
+    counterCont(&core);
+
+    // assert
+    assert_int_equal(1, core.jikuasi);
+    assert_float_equal(core.fwct, core.fwctEnd, 0.000001);
+}
+
+void counterCont_endOfCycle_groundedFootChanged(void** state) {
+    // arrange
+    core_t core;
+
+    core_init(&core);
+    core.jikuasi = 0;
+    core.fwctEnd = 18;
+    core.fwct   = 18;
+
+    // act
+    counterCont(&core);
+
+    // assert
+    assert_int_equal(1, core.jikuasi);
+}
+
+void counterCont_endOfCycle_fhReset(void** state) {
+    // arrange
+    core_t core;
+
+    core_init(&core);
+    core.jikuasi = 0;
+    core.fwctEnd = 18;
+    core.fwct = 18;
+
+    // act
+    counterCont(&core);
+
+    // assert
+    assert_float_equal(core.fh, 0.0f, 0.001);
+}
+
+void counterCont_endOfCycle_dNi_dNisSwapped(void** state) {
+    // arrange
+    core_t core;
+
+    core_init(&core);
+    core.fwctEnd = 18;
+    core.fwct = 18;
+    core.dxis = 0;
+    core.dyis = 0;
+    core.dxi = DEGREES2RADIANS(5);
+    core.dyi = DEGREES2RADIANS(3);
+
+    // act
+    counterCont(&core);
+
+    // assert
+    assert_float_equal(core.dxi, 0.0f, 0.00001);
+    assert_float_equal(core.dyi, 0.0f, 0.00001);
+    assert_float_equal(core.dxis, DEGREES2RADIANS(5), 0.00001);
+    assert_float_equal(core.dyis, DEGREES2RADIANS(3), 0.00001);
+}
+
+void counterCont_endOfCycle_dNi_dNibSwapped(void** state) {
+    // arrange
+    core_t core;
+
+    core_init(&core);
+    core.fwctEnd = 18;
+    core.fwct = 18;
+    core.dxis = 0;
+    core.dyis = 0;
+    core.dxib = 0;
+    core.dyib = 0;
+    core.dxi = DEGREES2RADIANS(5);
+    core.dyi = DEGREES2RADIANS(2);
+
+    // act
+    counterCont(&core);
+
+    // assert
+    assert_float_equal(core.dxi, 0.0f, 0.000001);
+    assert_float_equal(core.dyi, 0.0f, 0.000001);
+    assert_float_equal(core.dxib, DEGREES2RADIANS(5), 0.00001);
+    assert_float_equal(core.dyib, DEGREES2RADIANS(2), 0.00001);
+}
+
 // TODO walk
 
 int main(void) {
@@ -464,6 +578,12 @@ int main(void) {
         cmocka_unit_test(footCont_initialPosture_hipPitchChanged),
         cmocka_unit_test(footCont_initialPosture_kneeJointMoved),
         cmocka_unit_test(footCont_initialPosture_ankleMoved),
+        cmocka_unit_test(counterCont_cycle_fwctProgresses),
+        cmocka_unit_test(counterCont_cycle_fwctLimitedByFwctMax),
+        cmocka_unit_test(counterCont_endOfCycle_groundedFootChanged),
+        cmocka_unit_test(counterCont_endOfCycle_fhReset),
+        cmocka_unit_test(counterCont_endOfCycle_dNi_dNisSwapped),
+        cmocka_unit_test(counterCont_endOfCycle_dNi_dNibSwapped),
     };
 
     int keyContRc = test_keyCont();
