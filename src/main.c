@@ -40,6 +40,8 @@ int32_t	ii;
 
 float ks,kl;
 
+vec2_t vec2_zero = { 0.0f, 0.0f };
+
 float clamp(float value, float min, float max) {
 	if (value < min) {
 		return min;
@@ -454,20 +456,36 @@ void feetCont1(core_t* core, state_t* state, vec2_t p0, vec2_t p1, int s){
 	}
 
 	if(core->jikuasi==0){
-		footCont(core, state, (vec2_t){ p0[0],	p0[1]-core->wk },  core->autoH   ,	0 );
-		footCont(core, state, (vec2_t){ p1[0],	p1[1]-core->wk },  core->autoH-core->fh,	1 );
+		vec2_t v1, v2;
+		Vec2Set(v1, p0[0],	p0[1]-core->wk);
+		Vec2Set(v2, p1[0],	p1[1]-core->wk);
+		footCont(core, state, v1,  core->autoH   ,	0 );
+		footCont(core, state, v2,  core->autoH-core->fh,	1 );
 	}
 	else{
-		footCont(core, state, (vec2_t){ p0[0],	p0[1]-core->wk },  core->autoH-core->fh,	0 );
-		footCont(core, state, (vec2_t){ p1[0],	p1[1]-core->wk },  core->autoH   ,	1 );
+		vec2_t u1, u2;
+		Vec2Set(u1, p0[0],	p0[1]-core->wk);
+		Vec2Set(u2, p1[0],	p1[1]-core->wk);
+		footCont(core, state, u1,  core->autoH-core->fh,	0 );
+		footCont(core, state, u2,  core->autoH   ,	1 );
 	}
 }
 
 
 
 void feetCont2(core_t* core, state_t* state, int s){
-	if(core->jikuasi==0)	feetCont1( core, state, (vec2_t){ core->dxi  -core->swx, core->dyi  -core->swy }, (vec2_t){ core->dxis-core->swx, core->dyis+core->swy },s );
-	else					feetCont1( core, state, (vec2_t){ core->dxis -core->swx, core->dyis +core->swy }, (vec2_t){ core->dxi-core->swx, core->dyi-core->swy },s );
+	vec2_t v1, v2;
+
+	if (core->jikuasi == 0) {
+		Vec2Set(v1, core->dxi -core->swx, core->dyi -core->swy);
+		Vec2Set(v2, core->dxis-core->swx, core->dyis+core->swy);
+		feetCont1(core, state, v1, v2, s);
+	}
+	else {
+		Vec2Set(v1, core->dxis-core->swx, core->dyis+core->swy);
+		Vec2Set(v2, core->dxi -core->swx, core->dyi -core->swy);
+		feetCont1(core, state, v1, v2, s);
+	}
 }
 
 
@@ -565,9 +583,9 @@ case 710:
 		core->jikuasi=1;
 
 		//// 初期姿勢 Initial posture ////
-		footCont(core, state, (vec2_t){ 0,0 },HEIGHT,0);
+		footCont(core, state, vec2_zero,HEIGHT,0);
 		core->jikuasi=0;
-		footCont(core, state, (vec2_t){ 0,0 },HEIGHT,1);
+		footCont(core, state, vec2_zero,HEIGHT,1);
 		core->mode=720;					// 状態遷移 state transition
 		sprintf( (char *)globals.dsp,"mode=720\r\n" );
 		printS((char *)globals.dsp);

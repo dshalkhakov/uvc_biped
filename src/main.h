@@ -2,7 +2,9 @@
 
 #define Vec2Length(x,y)		(sqrt((x)*(x) + (y)*(y)))
 #define Vec2LengthSquared(x,y)	( (x)*(x) + (y)*(y) )
+#define Vec2Set(v,x,y)		( (v)[0]=(x), (v)[1]=(y) )
 
+extern vec2_t vec2_zero;
 extern float clamp(float value, float min, float max);
 
 // svangle_t is radians * SVANGLE_MULTIPLIER. range is -4000..4000, representing max 
