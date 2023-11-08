@@ -44,6 +44,7 @@ int bno55_read(unsigned char* command, size_t c_size, unsigned char* data, size_
 			return 1;
 		}
 	}
+	return 0;
 }
 
 //================ I2C stubs ===================

@@ -1,4 +1,26 @@
-﻿// representation of angles used by BNO55
+﻿typedef float vec2_t[2];
+
+#define Vec2Length(x,y)		(sqrt((x)*(x) + (y)*(y)))
+#define Vec2LengthSquared(x,y)	( (x)*(x) + (y)*(y) )
+#define Vec2Set(v,x,y)		( (v)[0]=(x), (v)[1]=(y) )
+
+extern vec2_t vec2_zero;
+extern float clamp(float value, float min, float max);
+
+// svangle_t is radians * SVANGLE_MULTIPLIER. range is -4000..4000, representing max 
+// servo rotation of 270 degrees, midpoint is zero.
+typedef int16_t svangle_t;
+
+// angle expressed in radians
+typedef float radangle_t;
+
+// hwsvangle_t is radians * SV_ANGLE_MULTIPLIER + 7500. range is 3500..11500, representing max 
+// servo rotation of 270 degrees, midpoint is 7500.
+typedef int16_t hwsvangle_t;
+
+// hwangle_t is representation of angle used by BNO55. degrees * 16.0
+typedef int16_t	hwangle_t;
+
 #define HWANGLE_180			(2880)
 #define HWANGLE_MULTIPLIER	(16.0f)
 #define HWANGLE_RECIPROCAL	(1.0f/16.0f)
@@ -6,9 +28,6 @@
 #define FROM_HWANGLE(x)		((x) * HWANGLE_RECIPROCAL)
 #define HWANGLE_TORAD(x)	((float)x*(M_PI/(180.0*16.0)))
 
-// representation of angles used by this program. derived from Kondo KRS series servo ICS3.5 protocol
-// these angles are 'normalized' to be in -4000..4000 range (270 degrees).
-// in ICS3.5 protocol, the range is 3500..11500 for 270 degrees, with 7500 being the midpoint of rotation.
 #define SVANGLE_180			(5331) // 180 degrees. might not be entirely accurate.
 #define SVANGLE_MULTIPLIER	(29.62f)
 #define SVANGLE_RECIPROCAL	(1.0f/29.62f)
@@ -20,21 +39,21 @@
 
 // biped servo state. these variables seem to represent servo angles in 'normalized' form 
 typedef struct state_s {
-	int16_t K0W[2];			// 股関節前後方向書込用 hip pitch
-	int16_t K1W[2];			// 股関節横方向書込用 hip roll
-	int16_t K2W[2];			// 股関節横方向書込用 hip yaw
-	int16_t HW[2];			// 膝関節書込用 For knee joint writing
-	int16_t A0W[2];			// 足首上下方向書込用 ankle pitch
-	int16_t A1W[2];			// 足首横方向書込用 ankle roll
-	int16_t U0W[2];			// 肩前後方向書込用 shoulder pitch
-	int16_t U1W[2];			// 肩横後方向書込用 shoulder roll
-	int16_t U2W[2];			// 肩ヨー向書込用 shoulder yaw
-	int16_t EW[2];			// 肘書込用 For elbow writing
-	int16_t WESTW;			// 腰回転書込用 For waist rotation writing
-	int16_t HEADW;			// 頭回転書込用 For head rotation writing
-	int16_t K0R, K0RB, U0R, U0L, U1R, U1L, EWS;
-	int16_t K0L, K0LB, U0WB;
-	int16_t K0WB;
+	svangle_t K0W[2];			// 股関節前後方向書込用 hip pitch
+	svangle_t K1W[2];			// 股関節横方向書込用 hip roll
+	svangle_t K2W[2];			// 股関節横方向書込用 hip yaw
+	svangle_t HW[2];			// 膝関節書込用 For knee joint writing
+	svangle_t A0W[2];			// 足首上下方向書込用 ankle pitch
+	svangle_t A1W[2];			// 足首横方向書込用 ankle roll
+	svangle_t U0W[2];			// 肩前後方向書込用 shoulder pitch
+	svangle_t U1W[2];			// 肩横後方向書込用 shoulder roll
+	svangle_t U2W[2];			// 肩ヨー向書込用 shoulder yaw
+	svangle_t EW[2];			// 肘書込用 For elbow writing
+	svangle_t WESTW;			// 腰回転書込用 For waist rotation writing
+	svangle_t HEADW;			// 頭回転書込用 For head rotation writing
+	svangle_t K0R, K0RB, U0R, U0L, U1R, U1L, EWS;
+	svangle_t K0L, K0LB, U0WB;
+	svangle_t K0WB;
 } state_t;
 
 typedef struct core_s {
@@ -42,16 +61,16 @@ typedef struct core_s {
 	// When jikuasi is 0, the right foot is in contact with the ground, and when it is 1,
 	// the left foot is in contact with the ground.
 	int16_t jikuasi;
-	int16_t motCt, motCtBak, motCtBak2, motCtdat;
+	int16_t motCt;					// used in initial posture as a 'timer'
+	int16_t motCtBak, motCtBak2, motCtdat;
 	int16_t mode, modeNxt, subMode; // keyMode
 	int16_t	pitch_gyr, roll_gyr, yaw_gyr;
 	int16_t	cycle, tst0;
 	int16_t	walkCt, walkCtLim;		// 歩数 number of steps
-	int16_t	p_ofs, r_ofs;
+	hwangle_t	p_ofs, r_ofs;
 	int16_t ir, ip, ira, ipa;
 	int16_t irb, ipb, ct;
-	// these angles are encoded as degree*16, eg. 180deg = 2880
-	int16_t	pitchs, rolls, pitch_ofs, roll_ofs, yaw, yaw_ofs;
+	hwangle_t	pitchs, rolls, pitch_ofs, roll_ofs, yaw, yaw_ofs;
 	// landB is always 0
 	int16_t	landF, landB;
 
@@ -67,9 +86,8 @@ typedef struct core_s {
 
 	float fwctEnd;					// DS: 一周期最大カウント数 Maximum count in one cycle
 	float fwct;						// DS: 一周期カウンタ One cycle counter
-	float fwctUp;
-	// these angles are in radians
-	float pitch, roll, pitcht, rollt;
+	float fwctUp;					// DS: fwct increment value
+	radangle_t pitch, roll, pitcht, rollt;
 	float pitch_gyrg, roll_gyrg;
 	float wk, wt;
 	// dyi is equivalent to I in PID control, and is for converting the tilt angle in the roll direction into the distance in the left-right direction and integrating it
@@ -78,9 +96,9 @@ typedef struct core_s {
 	float dxi, dxib, dxis;
 	float rollg, fw, fwi, fws, sw, freeBak, tt0;
 	float supportingLeg, swingLeg;	// 支持脚、遊脚股関節振出角度 Support leg, swing leg hip joint swing angle
-	float footH;					// 脚上げ高さ leg lift height
-	float swx, swy, swMax;			// 横振り巾 Horizontal width
-	float autoH, fh, fhMax;			// 脚上げ高さ leg lift height
+	float footH;					// 脚上げ高さ leg lift height in mm
+	float swx, swy, swMax;			// 横振り巾 Horizontal width in mm
+	float autoH, fh, fhMax;			// 脚上げ高さ leg lift height in mm
 } core_t;
 
 typedef struct input_s {
@@ -108,8 +126,8 @@ extern void uvc(core_t* core);
 extern void footUp(core_t* core);
 extern void swCont(core_t* core);
 extern void armCont(core_t* core, state_t* state);
-extern void footCont(core_t* core, state_t* state, float x, float y, float h, int s);
-extern void feetCont1(core_t* core, state_t* state, float x0, float y0, float x1, float y1, int s);
+extern void footCont(core_t* core, state_t* state, vec2_t p0, float h, int s);
+extern void feetCont1(core_t* core, state_t* state, vec2_t p0, vec2_t p1, int s);
 extern void feetCont2(core_t* core, state_t* state, int s);
 extern void counterCont(core_t* core);
 extern void walk(core_t* core, state_t* state);

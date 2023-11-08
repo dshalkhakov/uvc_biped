@@ -117,7 +117,7 @@ int sim_ics_set_pos(int port, unsigned char id, unsigned short pos) {
 		break;
 	}
 
-	float	angle = DEGREES2RADIANS(SVANGLE2ANGLE(-pos + 7500));
+	radangle_t	angle = DEGREES2RADIANS(SVANGLE2ANGLE(-pos + 7500));
 
 	if (dest != NULL) {
 		if (pos == 0) {
@@ -138,7 +138,7 @@ int sim_bno55_read(unsigned char* command, size_t c_size, unsigned char* data, s
 		// core->yaw	= ((int16_t)input->ff[0]) | (((int16_t)input->ff[1]) << 8); // Standing upright and turning clockwise +
 		// core->pitchs = ((int16_t)input->ff[2]) | (((int16_t)input->ff[3]) << 8); // Standing upright and leaning forward -
 		// core->rolls = ((int16_t)input->ff[4]) | (((int16_t)input->ff[5]) << 8); // Upright with right tilt +
-		int16_t yaw = 0, pitch = RADIANS2DEGREES(simstate.fbRad) * 16.0,
+		hwangle_t yaw = 0, pitch = RADIANS2DEGREES(simstate.fbRad) * 16.0,
 			roll = (RADIANS2DEGREES(simstate.lrRad) + 180.0f) * 16.0;
 		((int16_t*)data)[0] = 0;
 		((int16_t*)data)[1] = pitch;

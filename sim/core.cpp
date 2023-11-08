@@ -80,7 +80,7 @@ void core::walk(simstate_t* state, siminput_t* input){
 	////////////////////////
 	case 0:
 		if(autoHs>autoH)	autoHs-=1;	
-		else				mode=10;
+		else				mode=710;
 		footCont( state, -adjFR, 0, autoHs,  0 );
 		footCont( state, -adjFR, 0, autoHs,  1 );
 		break;
@@ -88,7 +88,7 @@ void core::walk(simstate_t* state, siminput_t* input){
 	//////////////////////
 	//// アイドル状態 idle state ////
 	//////////////////////
-	case 10:
+	case 710:
 		state->K0W[0]	=  0;
 		state->K0W[1]	=  0;
 
@@ -112,16 +112,16 @@ void core::walk(simstate_t* state, siminput_t* input){
 		fhOfs	=0;
 		footCont( state, -adjFR, 0, autoH, 0 );
 		footCont( state, -adjFR, 0, autoH, 1 );
-		if(input->walkF&0x01)	mode=20;
+		if(input->walkF&0x01)	mode=720;
 		break;
 
 
 	/////////////////////////////////////////////////////////////////
 	//////////////////////// 　歩行制御 walking control   ///////////////////////////
 	/////////////////////////////////////////////////////////////////
-	case 20:
-	case 25:
-	case 30:
+	case 720:
+	case 725:
+	case 730:
 
 		//###########################################################
 		//###################  UVC(上体垂直制御) UVC (upper body vertical control) ####################
@@ -161,21 +161,21 @@ void core::walk(simstate_t* state, siminput_t* input){
 		else				dx[jikuasi] = -(fw-dxi)*(  2.0*fwct/fwctEnd-1);	// 立脚中期移行UVC適用 Mid-stance transition UVC applied
 
 		//// 遊脚側前振り制御 Idle leg forward swing control ////
-		if(mode==20||mode==25){								// 両脚シフト期間 Double leg shift period
+		if(mode==720||mode==725){								// 両脚シフト期間 Double leg shift period
 			if( fwct<(landRate*fwctEnd) ){
 				dx[jikuasi^1] = fwr1-(fwr0-dx[jikuasi]);
-				if(mode==20&&fwct>2){
-					if( (jikuasi==0&&state->asiPress_r<-0.1) || (jikuasi==1&&state->asiPress_l<-0.1) ) mode=25;
+				if(mode==720&&fwct>2){
+					if( (jikuasi==0&&state->asiPress_r<-0.1) || (jikuasi==1&&state->asiPress_l<-0.1) ) mode=725;
 					else fhOfs+=input->fhRat;
 				}
 			}
 			else{
 				fwr1=dx[jikuasi^1];
-				mode=30;
+				mode=730;
 			}
 		}
 
-		if(mode==30){								// 前振出 forward swing
+		if(mode==730){								// 前振出 forward swing
 			float forwardSwing=(
 				-cosf(
 					M_PI*( fwct-landRate*fwctEnd )/
@@ -226,7 +226,7 @@ void core::walk(simstate_t* state, siminput_t* input){
 			fwr1 = dx[jikuasi^1];
 			fh=0;
 			fhOfs=0;
-			mode=20;
+			mode=720;
 			if(fw<fwr0)fw=fwr0;
 			if(fw>input->fwMax)fw=input->fwMax;			//// 上体前後角積分 Upper body anteroposterior angle integral ////
 		}

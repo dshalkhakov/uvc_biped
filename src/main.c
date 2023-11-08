@@ -38,9 +38,17 @@ globals_t globals;
 //// 汎用 General purpose ////
 int32_t	ii;
 
-float k,k0,k1,ks,kxy,kl;
+vec2_t vec2_zero = { 0.0f, 0.0f };
 
-
+float clamp(float value, float min, float max) {
+	if (value < min) {
+		return min;
+	}
+	if (value > max) {
+		return max;
+	}
+	return value;
+}
 
 ////////////////////////
 //// ターミナル表示 terminal display ////
@@ -180,13 +188,15 @@ void detAng(core_t* core){
 /////////////////////
 //// UVC補助制御 UVC auxiliary control ////
 /////////////////////
+// inputs: fwct, landF, dyi, fwctEnd, landB, rollt
+// outputs: dxi, dxis, dyi, dyis, autoH
 void uvcSub(core_t* core){
 
 	// ************ UVC終了時支持脚を垂直に戻す At the end of UVC, return the support leg to vertical position ************
 	if( core->fwct<=core->landF ){
 
 		// **** 左右方向 left and right direction ****
-		k = core->dyi/(11-core->fwct);
+		float k = core->dyi/(11-core->fwct);
 		core->dyi -= k;
 		core->dyis += k;
 
@@ -205,8 +215,7 @@ void uvcSub(core_t* core){
 		}
 	}
 	if(core->dyis> 70)	core->dyis=  70;
-	if(core->dxis<-70)	core->dxis= -70;
-	if(core->dxis> 70)	core->dxis=  70;
+	core->dxis = clamp(core->dxis, -70, 70);
 
 	// ************ 脚長制御 leg length control ************
 	if(HEIGHT>core->autoH){						// 脚長を徐々に復帰させる Gradually restore leg length
@@ -220,6 +229,8 @@ void uvcSub(core_t* core){
 	if(140>core->autoH)core->autoH=140;					// 最低脚長補償 Minimum leg length compensation
 }
 
+// inputs: fwctEnd, fwct, dyi, dxi, landF, autoH
+// outputs:  dyi, dxi, wk, state WESTW, K2W[0], K2W[1], diys, dxis, autoH
 void uvcSub2(core_t* core, state_t* state){
 	float k0,k1;
 
@@ -255,8 +266,7 @@ void uvcSub2(core_t* core, state_t* state){
 	core->autoH += (HEIGHT-core->autoH)/(core->fwctEnd-core->fwct+1);
 
 	if(core->dyis> 70)	core->dyis=  70;
-	if(core->dxis<-70)	core->dxis= -70;
-	if(core->dxis> 70)	core->dxis=  70;
+	core->dxis = clamp(core->dxis, -70, 70);
 }
 
 
@@ -264,52 +274,57 @@ void uvcSub2(core_t* core, state_t* state){
 /////////////////
 //// UVC制御 UVC control ////
 /////////////////
+// inputs: pitch, roll, jikuasi, landF, landB, fwct, fwctEnd, sw
+// outputs: rollt, pitcht, dyi, dxi, dxis, dyis, autoH
 void uvc(core_t* core){
-	float pb,rb,k;
+
+	float pitch = core->pitch, roll = core->roll;
 
 	// ************ 傾斜角へのオフセット適用 Apply offset to slope angle ************
-	rb=core->roll;		// 一時退避 temporary evacuation
-	pb=core->pitch;
-	k=sqrt(core->pitch*core->pitch+core->roll*core->roll);	// 合成傾斜角 Resultant tilt angle
-	if( k>0.033 ){
-		k=(k-0.033)/k;
-		core->pitch *=k;
-		core->roll  *=k;
-	}
-	else{
-		core->pitch =0;
-		core->roll  =0;
+	{
+		float k= Vec2Length(pitch,roll);	// 合成傾斜角 Resultant tilt angle
+		if( k>0.033 ){
+			float k1=(k-0.033)/k;
+			pitch *=k1;
+			roll  *=k1;
+		}
+		else{
+			pitch =0;
+			roll  =0;
+		}
 	}
 
 
 	// ************ 傾斜角に係数適用 Apply coefficient to slope angle ************
-	core->rollt =0.25*core->roll;
-	if(core->jikuasi==0)	core->rollt = -core->rollt;		// 横方向符号調整 Horizontal symbol adjustment
-	core->pitcht=0.25*core->pitch;
+	core->rollt =0.25*roll;
+	if(core->jikuasi==0)	core->rollt = -core->rollt;		// 横方向符号調整 Horizontal sign adjustment
+	core->pitcht=0.25*pitch;
 
 	if(core->fwct>core->landF && core->fwct<=core->fwctEnd-core->landB ){
 
 		// ************ UVC主計算 UVC main calculation ************
-		k	  = atan ((core->dyi-core->sw)/core->autoH );	// 片脚の鉛直に対する開脚角 Leg angle relative to the vertical of one leg
-		kl	  = core->autoH/cos(k);			// 前から見た脚投影長 Leg projection length seen from the front
-		ks = k+core->rollt;						// 開脚角に横傾き角を加算 Add side tilt angle to leg angle
-		k  = kl*sin(ks);						// 中点から横接地点までの左右距離 Left-right distance from midpoint to lateral contact point
-		core->dyi   = k+core->sw;				// 横方向UVC補正距離 Horizontal direction UVC correction distance
-		core->autoH = kl*cos(ks);				// K1までの高さ更新 Height update up to K1
+		{
+			float k	= atan ((core->dyi-core->sw)/core->autoH );	// 片脚の鉛直に対する開脚角 Leg angle relative to the vertical of one leg
+			float kl = core->autoH/cos(k);			// 前から見た脚投影長 Leg projection length seen from the front
+			float ks = k+core->rollt;					// 開脚角に横傾き角を加算 Add side tilt angle to leg angle
+			float kk	= kl*sin(ks);					// 中点から横接地点までの左右距離 Left-right distance from midpoint to lateral contact point
+			core->dyi	= kk+core->sw;					// 横方向UVC補正距離 Horizontal direction UVC correction distance
+			core->autoH = kl*cos(ks);				// K1までの高さ更新 Height update up to K1
+		}
 
 		// **** UVC（前後） UVC (front and back) *****
-		k 	  = atan( core->dxi/core->autoH );	// 片脚のX駆動面鉛直から見た現時点の前後開脚角 Current anteroposterior leg angle as seen from the vertical direction of the X drive plane of one leg
-		kl	  = core->autoH/cos(k);				// 片脚のX駆動面鉛直から見た脚長 Leg length as seen from the vertical direction of the X drive surface of one leg
-		ks	  = k+core->pitcht;					// 振出角に前後傾き角を加算 Add the forward and backward tilt angle to the swing angle
-		k	  = kl*sin(ks);					// 前後方向UVC補正距離 UVC correction distance in front and rear directions
-		core->dxi   = k;						// 前後方向UVC補正距離 UVC correction distance in front and rear directions
-		core->autoH = kl*cos(ks);				// K1までの高さ更新 Height update up to K1
+		{
+			float k = atan( core->dxi/core->autoH );	// 片脚のX駆動面鉛直から見た現時点の前後開脚角 Current anteroposterior leg angle as seen from the vertical direction of the X drive plane of one leg
+			float kl = core->autoH/cos(k);			// 片脚のX駆動面鉛直から見た脚長 Leg length as seen from the vertical direction of the X drive surface of one leg
+			float ks = k+core->pitcht;				// 振出角に前後傾き角を加算 Add the forward and backward tilt angle to the swing angle
+			float kk = kl*sin(ks);					// 前後方向UVC補正距離 UVC correction distance in front and rear directions
+			core->dxi = kk;								// 前後方向UVC補正距離 UVC correction distance in front and rear directions
+			core->autoH = kl*cos(ks);				// K1までの高さ更新 Height update up to K1
+		}
 
 		// ************ UVC積分値リミット設定 UVC integral value limit setting ************
-		if(core->dyi<  0) core->dyi=   0;
-		if(core->dyi> 45) core->dyi=  45;
-		if(core->dxi<-45) core->dxi= -45;
-		if(core->dxi> 45) core->dxi=  45;
+		core->dyi = clamp(core->dyi, 0, 45);
+		core->dxi = clamp(core->dxi, -45, 45);
 
 		// ************ 遊脚側を追従させる Make the free leg follow ************
 
@@ -320,18 +335,20 @@ void uvc(core_t* core){
 		core->dxis = -core->dxi;				// 遊脚X目標値 Idle leg X target value
 
 		// ************ 両脚内側並行補正 Medial parallel correction for both legs ************
-		if(core->jikuasi==0){			// 両脚を並行以下にしない Do not let your legs be less than parallel
-			k = -core->sw+core->dyi;	// 右足の外側開き具合 Outside opening of right foot
-			ks=  core->sw+core->dyis;	// 左足の外側開き具合 Outside opening of left foot
+		{
+			float k, ks;
+
+			if(core->jikuasi==0){			// 両脚を並行以下にしない Do not let your legs be less than parallel
+				k = -core->sw+core->dyi;	// 右足の外側開き具合 Outside opening of right foot
+				ks=  core->sw+core->dyis;	// 左足の外側開き具合 Outside opening of left foot
+			}
+			else{
+				ks= -core->sw+core->dyi;	// 左足の外側開き具合 Outside opening of left foot
+				k =  core->sw+core->dyis;	// 右足の外側開き具合 Outside opening of right foot
+			}
+			if(k+ks<0)core->dyis-=k+ks;		// 遊脚を平衡に補正 Correct the swing leg to balance
 		}
-		else{
-			ks= -core->sw+core->dyi;	// 左足の外側開き具合 Outside opening of left foot
-			k =  core->sw+core->dyis;	// 右足の外側開き具合 Outside opening of right foot
-		}
-		if(k+ks<0)core->dyis-=k+ks;		// 遊脚を平衡に補正 Correct the swing leg to balance
 	}
-	core->roll =rb;
-	core->pitch=pb;
 }
 
 
@@ -339,6 +356,8 @@ void uvc(core_t* core){
 ////////////////////
 //// 脚上げ操作 Leg raising operation ////
 ////////////////////
+// inputs: fwct, fwctEnd, landF, landB, fhMax
+// outputs: fh
 void footUp(core_t* core){
 
 	if( core->fwct>core->landF && core->fwct<=(core->fwctEnd- core->landB) ) core->fh = core->fhMax * sin( M_PI*(core->fwct-core->landF)/(core->fwctEnd-(core->landF+core->landB)) );
@@ -350,6 +369,8 @@ void footUp(core_t* core){
 ////////////////////
 //// 横振り制御 Horizontal swing control ////
 ////////////////////
+// inputs: fwct, fwctEnd, swMax, dxi, dyi, wt
+// outputs: swx, swy
 void swCont(core_t* core){
 	float k,t;
 
@@ -365,6 +386,8 @@ void swCont(core_t* core){
 ////////////////
 //// 腕制御 arm control ////
 ////////////////
+// inputs: dyis
+// outputs: state U1W[0], state U1W[1]
 void armCont(core_t* core, state_t* state){
 	state->U1W[0]=510*core->dyis/70; // 股幅に応じ腕を広げる Spread your arms according to the width of your thighs
 	if(state->U1W[0]<0) state->U1W[0]=0;
@@ -376,9 +399,11 @@ void armCont(core_t* core, state_t* state){
 ////////////////////
 //// 最終脚駆動 Last leg drive ////
 ////////////////////
-void footCont(core_t* core, state_t* state, float x,float y,float h,int s){
-// x:中点を0とする設置点前後方向距離（前+） Distance in the longitudinal direction of the installation point with the midpoint as 0 (front +)
-// y:中点を0とする設置点左右方向距離（右+） Distance in the horizontal direction of the installation point with the midpoint as 0 (right +)
+// inputs: HW[s], p0 : vec2_t, h, s
+// outputs: K0W[s], A0W[s], autoH, K1W[s], A1W[s]
+void footCont(core_t* core, state_t* state, vec2_t p0,float h,int s){
+// p0 x:中点を0とする設置点前後方向距離（前+） Distance in the longitudinal direction of the installation point with the midpoint as 0 (front +)
+// p0 y:中点を0とする設置点左右方向距離（右+） Distance in the horizontal direction of the installation point with the midpoint as 0 (right +)
 // h:足首ロール軸を基準に股関節ロール軸までの地上高(Max194.5) Ground clearance from the ankle roll axis to the hip roll axis (Max 194.5)
 // s:軸足0/遊脚1、指定 Pivot leg 0/swing leg 1, specified
 // 真正面からみたK1-A1間距離 	k = sqrt( x*x + h*h ); Distance between K1 and A1 when viewed directly from the front
@@ -388,34 +413,33 @@ void footCont(core_t* core, state_t* state, float x,float y,float h,int s){
 // K0-A0間直線距離 k = sqrt( x*x + k*k ); まとめると↓ -- Straight line distance between K0 and A0 k = sqrt( x*x + k*k ); To summarize, ↓
 // 高さhの最大は40+65+65+24.5=194.5mm -- Maximum height h is 40+65+65+24.5=194.5mm
 
-	float k;
-
-	k = sqrt(x*x+pow(sqrt(y*y+h*h)-64.5,2));	// K0-A0間直線距離 Straight line distance between K0-A0
+	float k = Vec2Length(p0[0], Vec2Length(p0[1], h) - 64.5);	// K0-A0間直線距離 Straight line distance between K0-A0
 	if(k>129){
-		core->autoH = sqrt(pow(sqrt(129*129-x*x)+64.5,2)-y*y);// 高さ補正 height correction
+		float temp1 = sqrt(129*129-p0[0]*p0[0]) + 64.5;
+		core->autoH = sqrt(temp1*temp1-p0[1]*p0[1]);// 高さ補正 height correction
 		k=129;
 	}
 
-	x = CHG_SVA*asin(x/k);						// K0脚振り角度 K0 leg swing angle
-	k = CHG_SVA*acos(k/130);					// 膝曲げ角度 knee bending angle
-	if(k>1800)k=1800;							// 60°Max
+	float x = CHG_SVA*asin(p0[0]/k);						// K0脚振り角度 K0 leg swing angle
+	float k0 = CHG_SVA*acos(k/130);					// 膝曲げ角度 knee bending angle
+	if(k0>1800)k0=1800;							// 60°Max
 
-	if		(2*k-state->HW[s]> 100) k=(state->HW[s]+100)/2;	// 回転速度最大 0.13s/60deg = 138count -- Maximum rotation speed
-	else if	(2*k-state->HW[s]<-100) k=(state->HW[s]-100)/2;
-//	if(core->mode!=0 && core->jikuasi==s)state->HW[s]	= k*1.98;	// 軸足のたわみを考慮 Consider the deflection of the pivot foot
-	if(core->mode!=0 && core->jikuasi==s)state->HW[s]	= k*2;
-	else							 state->HW[s]	= k*2;
-	state->K0W[s]	= k+x;
-	state->A0W[s]	= k-x;
+	if		(2*k0-state->HW[s]> 100) k0=(state->HW[s]+100)/2;	// 回転速度最大 0.13s/60deg = 138count -- Maximum rotation speed
+	else if	(2*k0-state->HW[s]<-100) k0=(state->HW[s]-100)/2;
+//	if(core->mode!=0 && core->jikuasi==s)state->HW[s]	= k0*1.98;	// 軸足のたわみを考慮 Consider the deflection of the pivot foot
+	if(core->mode!=0 && core->jikuasi==s)state->HW[s]	= k0*2;
+	else							 state->HW[s]	= k0*2;
+	state->K0W[s]	= k0+x;
+	state->A0W[s]	= k0-x;
 
-	k = CHG_SVA*atan(y/h);						// K1角度 K1 angle
+	float k1 = CHG_SVA*atan(p0[1]/h);						// K1角度 K1 angle
 
-	if		(k-state->K1W[s]> 100) k=state->K1W[s]+100;		// 回転速度最大 0.13s/60deg = 138count -- Maximum rotation speed
-	else if	(k-state->K1W[s]<-100) k=state->K1W[s]-100;
+	if		(k1-state->K1W[s]> 100) k1=state->K1W[s]+100;		// 回転速度最大 0.13s/60deg = 138count -- Maximum rotation speed
+	else if	(k1-state->K1W[s]<-100) k1=state->K1W[s]-100;
 
-	if(core->mode!=0 && core->jikuasi==s)state->K1W[s] = k;		// 軸足のたわみを考慮 Consider the deflection of the pivot foot
-	else					          state->K1W[s] = k;
-	state->A1W[s] = -k;
+	if(core->mode!=0 && core->jikuasi==s)state->K1W[s] = k1;		// 軸足のたわみを考慮 Consider the deflection of the pivot foot
+	else					          state->K1W[s] = k1;
+	state->A1W[s] = -k1;
 }
 
 
@@ -423,17 +447,19 @@ void footCont(core_t* core, state_t* state, float x,float y,float h,int s){
 ////////////////////
 //// 統合脚駆動 integrated leg drive ////
 ////////////////////
-void feetCont1(core_t* core, state_t* state, float x0, float y0, float x1, float y1, int s){
+// inputs: jikuasi, p0, p1, s
+// outputs: wt, wk, state WESTW, state K2W[0], state K2W[1]
+void feetCont1(core_t* core, state_t* state, vec2_t p0, vec2_t p1, int s){
 
 	if(s==1){
-		if(y0+21.5==0)		core->wt = 0;			// 0除算回避 avoid divide by 0
+		if(p0[1]+21.5==0)		core->wt = 0;			// 0除算回避 avoid divide by 0
 		else if(core->jikuasi==0){
-			core->wt = 0.5*atan( x0/(y0+21.5) );	// 腰回転角度 waist rotation angle
-			core->wk=fabs(15.0*x0/45);			// 45:最大歩幅 15:足内側最大移動量 45: Maximum stride length 15: Maximum amount of movement on the inside of the foot
+			core->wt = 0.5*atan( p0[0]/(p0[1]+21.5) );	// 腰回転角度 waist rotation angle
+			core->wk=fabs(15.0*p0[0]/45);			// 45:最大歩幅 15:足内側最大移動量 45: Maximum stride length 15: Maximum amount of movement on the inside of the foot
 		}
 		else{
-			core->wt = 0.5*atan( -x1/(y1+21.5) );	// 腰回転角度 waist rotation angle
-			core->wk=fabs(15.0*x1/45);
+			core->wt = 0.5*atan( -p1[0]/(p1[1]+21.5) );	// 腰回転角度 waist rotation angle
+			core->wk=fabs(15.0*p1[0]/45);
 		}
 
 		state->WESTW = core->wt*CHG_SVA;					// 腰回転（+で上体右回転） Hip rotation (+: upper body rotation to the right)
@@ -442,20 +468,37 @@ void feetCont1(core_t* core, state_t* state, float x0, float y0, float x1, float
 	}
 
 	if(core->jikuasi==0){
-		footCont(core, state, x0,	y0-core->wk,  core->autoH   ,	0 );
-		footCont(core, state, x1,	y1-core->wk,  core->autoH-core->fh,	1 );
+		vec2_t v1, v2;
+		Vec2Set(v1, p0[0],	p0[1]-core->wk);
+		Vec2Set(v2, p1[0],	p1[1]-core->wk);
+		footCont(core, state, v1,  core->autoH   ,	0 );
+		footCont(core, state, v2,  core->autoH-core->fh,	1 );
 	}
 	else{
-		footCont(core, state, x0,	y0-core->wk,  core->autoH-core->fh,	0 );
-		footCont(core, state, x1,	y1-core->wk,  core->autoH   ,	1 );
+		vec2_t u1, u2;
+		Vec2Set(u1, p0[0],	p0[1]-core->wk);
+		Vec2Set(u2, p1[0],	p1[1]-core->wk);
+		footCont(core, state, u1,  core->autoH-core->fh,	0 );
+		footCont(core, state, u2,  core->autoH   ,	1 );
 	}
 }
 
 
-
+// inputs: jikuasi, dxi, swx, dyi, swy
+// outputs: feetCont1() outputs
 void feetCont2(core_t* core, state_t* state, int s){
-	if(core->jikuasi==0)	feetCont1( core, state, core->dxi  -core->swx, core->dyi  -core->swy,core->dxis-core->swx, core->dyis+core->swy ,s );
-	else					feetCont1( core, state, core->dxis -core->swx, core->dyis +core->swy, core->dxi-core->swx, core->dyi  -core->swy ,s );
+	vec2_t v1, v2;
+
+	if (core->jikuasi == 0) {
+		Vec2Set(v1, core->dxi -core->swx, core->dyi -core->swy);
+		Vec2Set(v2, core->dxis-core->swx, core->dyis+core->swy);
+		feetCont1(core, state, v1, v2, s);
+	}
+	else {
+		Vec2Set(v1, core->dxis-core->swx, core->dyis+core->swy);
+		Vec2Set(v2, core->dxi -core->swx, core->dyi -core->swy);
+		feetCont1(core, state, v1, v2, s);
+	}
 }
 
 
@@ -463,21 +506,23 @@ void feetCont2(core_t* core, state_t* state, int s){
 ///////////////////////////
 //// 周期カウンタの制御 Period counter control ////
 ///////////////////////////
+// inputs: fwct, fwctEnd
+// outputs: jikuasi, fwct, fwctUp, fh, dyis, dyi, dyib, dxis, dxi, dxib
 void counterCont(core_t* core){
 	if(core->fwct>=core->fwctEnd){	// 簡易仕様（固定周期） Simple specifications (fixed cycle)
 		core->jikuasi^=1;
 		core->fwct=0;
 
 		core->fh=0;
-		k=core->dyis;
+		float k=core->dyis;
 		core->dyis=core->dyi;
 		core->dyib=core->dyi;
 		core->dyi=k;
 
-		k=core->dxis;
+		float k1=core->dxis;
 		core->dxis=core->dxi;
 		core->dxib=core->dxi;
-		core->dxi=k;
+		core->dxi=k1;
 	}
 	else{
 		core->fwct+=core->fwctUp;
@@ -553,9 +598,9 @@ case 710:
 		core->jikuasi=1;
 
 		//// 初期姿勢 Initial posture ////
-		footCont(core, state, 0,0,HEIGHT,0);
+		footCont(core, state, vec2_zero,HEIGHT,0);
 		core->jikuasi=0;
-		footCont(core, state, 0,0,HEIGHT,1);
+		footCont(core, state, vec2_zero,HEIGHT,1);
 		core->mode=720;					// 状態遷移 state transition
 		sprintf( (char *)globals.dsp,"mode=720\r\n" );
 		printS((char *)globals.dsp);
@@ -626,11 +671,12 @@ case 740:
 
 //**** ⑤ UVC後、振動減衰待ち ⑤ After UVC, wait for vibration damping ****
 case 750:
+	// initial values in mode 750: what they were in mode 750 when fwct was set to 0
 	feetCont2(core, state, 1);
 	if(	core->fwct>30 ){
 		core->fwct=1;
 
-		k=sqrt(0.5* core->dxis*core->dxis+core->dyis*core->dyis);	// 移動量、前後方向は減少させる Reduce the amount of movement and the forward and backward directions
+		float k=sqrt(0.5* Vec2LengthSquared(core->dxis, core->dyis));	// 移動量、前後方向は減少させる Reduce the amount of movement and the forward and backward directions
 		core->swMax=17+17*k/45;
 
 		core->mode=760;		// 状態遷移 state transition
@@ -649,6 +695,7 @@ case 750:
 
 //**** ⑥ 回復動作 ⑥ Recovery operation ****
 case 760:
+	// initial values in mode 760: landF = 25, fwctEnd = landF+25 (50), fwct = 1
 	core->landF=25;
 	core->fwctEnd=core->landF+25; // 15
 	uvcSub2(core, state);	// UVCサブ制御 UVC sub control
@@ -686,6 +733,7 @@ case 760:
 
 //**** ⑦ 回復後、振動減衰待ち ⑦ After recovery, wait for vibration to dampen ****
 case 770:
+	// initial values in mode 770: landF = 0, fwctEnd = 18, fwctUp = 1, fwct = 1
 	feetCont2(core, state, 0);
 	if( core->fwct>50 ){ // 50
 		core->fwct=1;
