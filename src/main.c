@@ -188,6 +188,8 @@ void detAng(core_t* core){
 /////////////////////
 //// UVC補助制御 UVC auxiliary control ////
 /////////////////////
+// inputs: fwct, landF, dyi, fwctEnd, landB, rollt
+// outputs: dxi, dxis, dyi, dyis, autoH
 void uvcSub(core_t* core){
 
 	// ************ UVC終了時支持脚を垂直に戻す At the end of UVC, return the support leg to vertical position ************
@@ -669,6 +671,7 @@ case 740:
 
 //**** ⑤ UVC後、振動減衰待ち ⑤ After UVC, wait for vibration damping ****
 case 750:
+	// initial values in mode 750: what they were in mode 750 when fwct was set to 0
 	feetCont2(core, state, 1);
 	if(	core->fwct>30 ){
 		core->fwct=1;
@@ -692,6 +695,7 @@ case 750:
 
 //**** ⑥ 回復動作 ⑥ Recovery operation ****
 case 760:
+	// initial values in mode 760: landF = 25, fwctEnd = landF+25 (50), fwct = 1
 	core->landF=25;
 	core->fwctEnd=core->landF+25; // 15
 	uvcSub2(core, state);	// UVCサブ制御 UVC sub control
@@ -729,6 +733,7 @@ case 760:
 
 //**** ⑦ 回復後、振動減衰待ち ⑦ After recovery, wait for vibration to dampen ****
 case 770:
+	// initial values in mode 770: landF = 0, fwctEnd = 18, fwctUp = 1, fwct = 1
 	feetCont2(core, state, 0);
 	if( core->fwct>50 ){ // 50
 		core->fwct=1;
