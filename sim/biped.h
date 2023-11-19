@@ -83,6 +83,7 @@ typedef struct simstate_s {
 #endif
 
 	// センサ関連 Sensor related
+	double heading[3];			// pitch, yaw, roll angles
 	double fbRad = 0;			// 頭前後角度 head front and back angle
 	double lrRad = 0;			// 頭左右角度 head left and right angle
 	double fbAV = 0;			// 頭前後角速度 head front and rear angular velocity

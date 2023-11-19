@@ -132,26 +132,34 @@ int sim_ics_set_pos(int port, unsigned char id, unsigned short pos) {
 	return pos;
 }
 
+#define LOW_BYTE(x)		((x) & 0xFF)
+#define HIGH_BYTE(x)	(((x) >> 8) & 0xFF)
+
 int sim_bno55_read(unsigned char* command, size_t c_size, unsigned char* data, size_t r_size) {
 	if (c_size == 1 && command[0] == 0X1A && r_size == 6) {
-		// return gyroscope data in degrees*16.0
+		// return gyroscope absolute angle readings as degrees*16.0
 		// core->yaw	= ((int16_t)input->ff[0]) | (((int16_t)input->ff[1]) << 8); // Standing upright and turning clockwise +
 		// core->pitchs = ((int16_t)input->ff[2]) | (((int16_t)input->ff[3]) << 8); // Standing upright and leaning forward -
 		// core->rolls = ((int16_t)input->ff[4]) | (((int16_t)input->ff[5]) << 8); // Upright with right tilt +
-		hwangle_t yaw = 0, pitch = RADIANS2DEGREES(simstate.fbRad) * 16.0,
-			roll = (RADIANS2DEGREES(simstate.lrRad) + 180.0f) * 16.0;
-		((int16_t*)data)[0] = 0;
-		((int16_t*)data)[1] = pitch;
-		((int16_t*)data)[2] = roll;
+		// euler angles to ode 3x4 matrix procedure seems to have roll, pitch, yaw (Z, X, Y) convention
+		hwangle_t roll = (RADIANS2DEGREES(simstate.heading[0] + M_PI)) * 16.0,
+			pitch = (RADIANS2DEGREES(simstate.heading[1])) * 16.0,
+			yaw = (RADIANS2DEGREES(simstate.heading[2])) * 16.0;
+		((uint8_t*)data)[0] = LOW_BYTE(yaw);
+		((uint8_t*)data)[1] = HIGH_BYTE(yaw);
+		((uint8_t*)data)[2] = LOW_BYTE(pitch);
+		((uint8_t*)data)[3] = HIGH_BYTE(pitch);
+		((uint8_t*)data)[4] = LOW_BYTE(roll);
+		((uint8_t*)data)[5] = HIGH_BYTE(roll);
 		return 1;
 	}
 	else if (c_size == 1 && command[0] == 0X14 && r_size == 6) {
-		// return angular velocity in degrees*16.0
-		int16_t fbAV = RADIANS2DEGREES(simstate.fbAV) * 16.0f;
-		int16_t lrAV = RADIANS2DEGREES(simstate.lrAV) * 16.0f;
-		((int16_t*)data)[0] = 0;
-		((int16_t*)data)[1] = fbAV;
-		((int16_t*)data)[2] = lrAV;
+		// return angular velocity in radians*1000
+		int16_t fbAV = (simstate.fbAV) * 1000.0f;
+		int16_t lrAV = (simstate.lrAV) * 1000.0f;
+		((int16_t*)data)[0] = fbAV;	// roll
+		((int16_t*)data)[1] = lrAV;	// pitch
+		((int16_t*)data)[2] = 0;	// yaw
 		return 1;
 	}
 

@@ -37,6 +37,29 @@ typedef int16_t	hwangle_t;
 #define DEGREES2RADIANS(deg)	((deg) * (M_PI/180.0f))
 #define RADIANS2DEGREES(rad)	((rad) * (180.0f/M_PI))
 
+// fwct is actually not just a counter. in some modes it represents two counters, which turn on one after the other.
+// at start, the first is ticking. when some value X is reached, counter 2 starts. etc.
+// so an offset value X is needed to decode the ticks of both counters.
+// originally counter_t was represented by a float, but short seems to work, too. and it's also compatible
+// with simulator representation.
+typedef int16_t		counter_t;
+
+// offset on some counter. represented as a short.
+typedef int16_t		counterOfs_t;
+
+// c : counter_t, cofs : counterOfs_t, : bool
+#define cntr_isBefore(c,cofs)	( (c) <= (cofs) )
+
+// c : counter_t, cofs : counterOfs_t, : bool
+#define cntr_isAfter(c,cofs)	( (c) > (cofs) )
+
+// c : counter_t, cofs : counterOfs_t
+#define cntr_eta(cofs,c)	( (cofs)-(c) )
+
+#define cntr_tick(c,cofs)	( (c) += (cofs) )
+
+#define cntr_reset(c,cofs)	( (c) = (cofs) )
+
 // biped servo state. these variables seem to represent servo angles in 'normalized' form 
 typedef struct state_s {
 	svangle_t K0W[2];			// 股関節前後方向書込用 hip pitch
@@ -72,7 +95,7 @@ typedef struct core_s {
 	int16_t irb, ipb, ct;
 	hwangle_t	pitchs, rolls, pitch_ofs, roll_ofs, yaw, yaw_ofs;
 	// landB is always 0
-	int16_t	landF, landB;
+	counterOfs_t	landF, landB;
 
 	int32_t	tBak, pitchi;
 	uint32_t tNow;
@@ -84,9 +107,9 @@ typedef struct core_s {
 	//int8_t	kn;
 	int8_t	LEDct;	// LED点灯カウンタ LED lighting counter
 
-	float fwctEnd;					// DS: 一周期最大カウント数 Maximum count in one cycle
-	float fwct;						// DS: 一周期カウンタ One cycle counter
-	float fwctUp;					// DS: fwct increment value
+	counterOfs_t fwctEnd;					// DS: 一周期最大カウント数 Maximum count in one cycle
+	counter_t fwct;						// DS: 一周期カウンタ One cycle counter
+	counterOfs_t fwctUp;					// DS: fwct increment value
 	radangle_t pitch, roll, pitcht, rollt;
 	float pitch_gyrg, roll_gyrg;
 	float wk, wt;
@@ -123,7 +146,7 @@ extern void detAng(core_t* core);
 extern void uvcSub(core_t* core);
 extern void uvcSub2(core_t* core, state_t* state);
 extern void uvc(core_t* core);
-extern void footUp(core_t* core);
+extern float footUp(core_t* core);
 extern void swCont(core_t* core);
 extern void armCont(core_t* core, state_t* state);
 extern void footCont(core_t* core, state_t* state, vec2_t p0, float h, int s);

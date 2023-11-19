@@ -68,6 +68,7 @@ void simstate_init(simstate_t* state) {
 #endif
 
 	// センサ関連 Sensor related
+	state->heading[0] = state->heading[1] = state->heading[2] = 0;	// head yaw angle
 	state->fbRad = 0;			// 頭前後角度 head front and back angle
 	state->lrRad = 0;			// 頭左右角度 head left and right angle
 	state->fbAV = 0;			// 頭前後角速度 head front and rear angular velocity
@@ -134,20 +135,24 @@ static void command (int cmd){
 
 	switch (cmd) {
 		//// 外力印加 External input ////
-		case 'j':case 'J':
-			printf("F<-\n"); // Ｆ←\n
+		//case 'j':case 'J':
+		case 'k':case 'K':
+			printf("F<- x -20 (pushed backwards)\n"); // Ｆ←\n
 			dBodyAddForce(biped.DOU.bodyId, -20,0,0);
 			break;
-		case 'k':case 'K':
-			printf("F->\n"); // Ｆ→\n
+		//case 'k':case 'K':
+		case 'i':case 'I':
+			printf("F-> x +20 (pushed forwards)\n"); // Ｆ→\n
 			dBodyAddForce(biped.DOU.bodyId,  20,0,0);
 			break;
-		case 'p':case 'P':
-			printf("F^\n"); // Ｆ↑
+		//case 'p':case 'P':
+		case 'l':case'L':
+			printf("F^ y +20 (pushed to the right)\n"); // Ｆ↑
 			dBodyAddForce(biped.DOU.bodyId, 0,20,0);
 			break;
-		case 'l':case 'L':
-			printf("F.\n"); // Ｆ↓
+		//case 'l':case 'L':
+		case 'j':case 'J':
+			printf("Fv y -20 (pushed to the left)\n"); // Ｆ↓
 			dBodyAddForce(biped.DOU.bodyId,  0,-20,0);
 			break;
 
@@ -293,6 +298,76 @@ static void control(){
 	}
 }
 
+// output angles are in radians
+static void odeMatrixToEulerAngles(const double *rotMatrix, /* out */ double angles[3]) {
+	// ODE matrix is in row, column order
+	//		| 0  1  2  3  |            | 0  4  8  12 |
+	//		|             |            |             |
+	//	R = | 4  5  6  7  |            | 1  5  9  13 |
+	//		|             |        M = |             |
+	//		| 8  9  10 11 |            | 2  6  10 14 |
+	// 		|             |
+	// 
+	//	p = | 0  1  2 |                | 3  7  11 15 |
+#if false
+	float sy = sqrt(rotMatrix[0] * rotMatrix[0] + rotMatrix[4] * rotMatrix[4]);
+	//					0,0				0,0				1,0				1,0
+
+	bool singular = sy < 1e-6; // If
+	if (!singular)
+	{
+		angles[0] = atan2(rotMatrix[9], rotMatrix[10]);	// 2,1	2,2
+		angles[1] = atan2(-rotMatrix[8], sy);		// -2,0
+		angles[2] = atan2(rotMatrix[4], rotMatrix[0]);	// 1,0	0,0
+	}
+	else
+	{
+		angles[0] = atan2(-rotMatrix[6], rotMatrix[5]);	// -1,2	1,1
+		angles[1] = atan2(-rotMatrix[8], sy);		// 2,0
+		angles[2] = 0;
+	}
+	// output is ZYX (whatever it is!)
+#elif false
+	angles[0] = asin(-rotMatrix[9]);	// 3,2 -> 2,1 (0 based index)
+
+	if (angles[0] < M_PI_2)
+	{
+		if (angles[0] > -M_PI_2)
+		{
+			angles[1] = atan2(rotMatrix[8], rotMatrix[10]);	// 3,1 3,3 -> 2,0 2,2
+			angles[2] = atan2(rotMatrix[1], rotMatrix[5]);	// 1,2 2,2 -> 0,1 1,1
+		}
+		else
+		{
+			angles[1] = -atan2(-rotMatrix[4], rotMatrix[0]); // -2,1 1,1 -> -1,0 0,0
+			angles[2] = 0.0f;
+		}
+	}
+	// output is ZYX, it seems (whatever it is!)
+#else
+	angles[1] = -asin(rotMatrix[2]);		// 0,2
+	double C = cos(angles[1]);
+	double rotx, roty;
+	if (fabs(C) > (double)0.0005) {
+		rotx = rotMatrix[10] / C;		// 2,2
+		roty = rotMatrix[6] / C;		// 1,2
+		angles[0] = atan2(roty, rotx);
+		rotx = rotMatrix[0] / C;		// 0,0
+		roty = rotMatrix[1] / C;		// 0,1
+		angles[2] = atan2(roty, rotx);
+	}
+	else {
+		angles[0] = 0;
+		rotx = rotMatrix[5];			// 1,1
+		roty = -rotMatrix[4];		// 1,0
+		angles[2] = atan2(roty, rotx);
+	};
+	//if (angles[0] < 0) angles[0] += M_PI * (double)2;
+	//if (angles[1] < 0) angles[1] += M_PI * (double)2;
+	//if (angles[2] < 0) angles[2] += M_PI * (double)2;
+	// output is ZYX, it seems (whatever it is!)
+#endif
+}
 
 //--------------------------------- simLoop ----------------------------------------
 //	simulation loop
@@ -327,6 +402,11 @@ static void simLoop (int pause){
 		temp_Rot = dBodyGetRotation(biped.HEADT.bodyId);		// 回転行列取得 Get rotation matrix
 		simstate.fbRad = asin(temp_Rot[8]);					// 頭前後角度(後ろに仰向きが正) Anteroposterior angle of the head (positive when facing backwards)
 		simstate.lrRad = asin(temp_Rot[9]);					// 頭左右角度（右傾きが正） Head left/right angle (right tilt is positive)
+
+		// heading
+		const double* rotMatrix = dBodyGetRotation(biped.DOU.bodyId);
+		odeMatrixToEulerAngles(rotMatrix, simstate.heading);
+		// !heading
 
 		//******** 頭前後左右角速度検出 Head front, rear, left and right angular velocity ********
 		temp_Rot = dBodyGetAngularVel(biped.HEADT.bodyId);	// 回転行列取得 Get rotation matrix
@@ -584,8 +664,6 @@ static void createBody (biped_t* biped){
 
 	setBody  (&biped->HEADT,		BODYTYPE_CAPSULE, COLOR_WHITE,	15,	0,	0,	21,		0,	0,	340,	0,	0.16);	// 頭 head
 #ifdef USING_MAIN
-	dRFromAxisAndAngle(world_R, 0, 0, 1, -M_PI_2);// 回転 rotate
-	dBodySetRotation(biped->HEADT.bodyId, world_R);
 	// torso + pelvis
 	setBody  (&biped->DOU,		BODYTYPE_BOX,COLOR_BODY,	40, 84, 60,0,		0,	0,	295,	1,	1.0);	// 胴 torso
 	setBody  (&biped->PELVIS,	BODYTYPE_BOX,COLOR_GREEN,	40, 64, 45,0,		0,	0,	240,	1,	0.24);
