@@ -157,9 +157,12 @@ int sim_bno55_read(unsigned char* command, size_t c_size, unsigned char* data, s
 		// return angular velocity in radians*1000
 		int16_t fbAV = (simstate.fbAV) * 1000.0f;
 		int16_t lrAV = (simstate.lrAV) * 1000.0f;
-		((int16_t*)data)[0] = fbAV;	// roll
-		((int16_t*)data)[1] = lrAV;	// pitch
-		((int16_t*)data)[2] = 0;	// yaw
+		((uint8_t*)data)[0] = LOW_BYTE(fbAV);	// roll
+		((uint8_t*)data)[1] = HIGH_BYTE(fbAV);	// roll
+		((uint8_t*)data)[2] = LOW_BYTE(lrAV);	// pitch
+		((uint8_t*)data)[3] = HIGH_BYTE(lrAV);	// pitch
+		((uint8_t*)data)[4] = 0;	// yaw
+		((uint8_t*)data)[5] = 0;	// yaw
 		return 1;
 	}
 
