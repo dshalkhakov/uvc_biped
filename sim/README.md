@@ -13,13 +13,13 @@ r:　Reset (return to the initial position)
 
 q:　Finished 
 
-j: Ｆ←
+j: push robot to the left
 
-k: Ｆ→
+k: push robot backward
 
-p: Ｆ↑
+i: push robot forward
 
-l: Ｆ↓
+l: push robot to the right
 
 1:　Experiment of applying external force
 Set the experimental environment to push the robot from behind.

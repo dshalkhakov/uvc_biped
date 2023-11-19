@@ -147,7 +147,7 @@ void angAdj(core_t* core){
 ///////////////////////
 void detAng(core_t* core){
 	if( 0.35>fabs(core->pitch) && 0.35>fabs(core->roll) )return;
-	sprintf( (char *)globals.dsp," PRA:%4d %4d PRG:%4d %4d\r\n",core->pitchs,core->rolls,core->pitch_gyr,core->roll_gyr );
+	sprintf( (char *)globals.dsp," Pitch Roll Angle:%4d %4d Pitch Roll Gyroscope:%4d %4d\r\n",core->pitchs,core->rolls,core->pitch_gyr,core->roll_gyr );
 	printS((char *)globals.dsp);
 
 	ics_set_pos	( UART_SIO2, 1, 4735 +1350 );	//U0R
@@ -179,6 +179,10 @@ void detAng(core_t* core){
 	ics_set_pos		( UART_SIO3, 9, 0 );	//A0L
 	sprintf( (char *)globals.dsp,"turn over :%4d %4d\r\n",core->mode,core->pitchs );
 	printS ( (char *)globals.dsp );
+#ifdef _DEBUG
+	core->mode = 600;
+	return;
+#endif
 	// FIXME DS: needed? maybe a debug aid?
 	while(1){}
 }
@@ -358,10 +362,10 @@ void uvc(core_t* core){
 ////////////////////
 // inputs: fwct, fwctEnd, landF, landB, fhMax
 // outputs: fh
-void footUp(core_t* core){
+float footUp(core_t* core){
 
-	if( core->fwct>core->landF && core->fwct<=(core->fwctEnd- core->landB) ) core->fh = core->fhMax * sin( M_PI*(core->fwct-core->landF)/(core->fwctEnd-(core->landF+core->landB)) );
-	else																	core->fh = 0;
+	if( core->fwct>core->landF && core->fwct<=(core->fwctEnd- core->landB) ) return core->fhMax * sin( M_PI*(core->fwct-core->landF)/(core->fwctEnd-(core->landF+core->landB)) );
+	else																	return 0;
 }
 
 
@@ -654,13 +658,15 @@ case 730:
 
 //**** ④ UVC動作開始 ④ UVC action starts ****
 case 740:
+	// jukuasi moves up
 	uvc(core);				// UVCメイン制御 UVC main control
 	uvcSub(core);			// UVCサブ制御 UVC sub control
-	footUp(core);			// 脚上げによる股関節角算出 Calculating hip joint angle by raising legs
+	core->fh = footUp(core);			// 脚上げによる股関節角算出 Calculating hip joint angle by raising legs
 	feetCont2(core, state, 1);	// 脚駆動 leg drive
 	armCont(core, state);
 	counterCont(core);			// 周期カウンタの制御 Period counter control
 	if(core->fwct==0){
+		// jikuasi has moved all the way up -> state transition
 		core->mode=750;			// 状態遷移 state transition
 		sprintf( (char *)globals.dsp,"mode=750\r\n" );
 		printS((char *)globals.dsp);
@@ -671,9 +677,11 @@ case 740:
 
 //**** ⑤ UVC後、振動減衰待ち ⑤ After UVC, wait for vibration damping ****
 case 750:
+	// jikuasi moves down
 	// initial values in mode 750: what they were in mode 750 when fwct was set to 0
 	feetCont2(core, state, 1);
 	if(	core->fwct>30 ){
+		// jikuasi has touched ground
 		core->fwct=1;
 
 		float k=sqrt(0.5* Vec2LengthSquared(core->dxis, core->dyis));	// 移動量、前後方向は減少させる Reduce the amount of movement and the forward and backward directions
@@ -695,11 +703,13 @@ case 750:
 
 //**** ⑥ 回復動作 ⑥ Recovery operation ****
 case 760:
+	// jikuasi has moved up in 740, and down touching the ground in 750
+	// now calculate fh, swing torso and arms to keep balance. a step or two can be made to counteract detected tilt
 	// initial values in mode 760: landF = 25, fwctEnd = landF+25 (50), fwct = 1
-	core->landF=25;
+	core->landF=25;			// bigger value seems to work better
 	core->fwctEnd=core->landF+25; // 15
 	uvcSub2(core, state);	// UVCサブ制御 UVC sub control
-	footUp(core);			// 脚上げによる股関節角算出 Calculating hip joint angle by raising legs
+	core->fh = footUp(core);			// 脚上げによる股関節角算出 Calculating hip joint angle by raising legs
 	swCont(core);			// 横振り制御 Horizontal swing control
 	feetCont2(core, state, 0);	// 脚駆動 leg drive
 	armCont(core, state);
@@ -1290,6 +1300,11 @@ top:
 
 int32_t main_step(state_t* state, core_t* core, input_t* input, int initialI) {
 	int32_t i = initialI;
+
+	if (core->mode == 600) {
+		// turnover happened. do nothing
+		return initialI;
+	}
 
 	//////////////////////
 	//// 10ms待ち処理 10ms wait processing ////
